@@ -23,6 +23,8 @@ const reports_module_1 = require("./reports/reports.module");
 const printing_module_1 = require("./printing/printing.module");
 const whatsapp_module_1 = require("./whatsapp/whatsapp.module");
 const sync_module_1 = require("./sync/sync.module");
+const audit_module_1 = require("./audit/audit.module");
+const settings_module_1 = require("./settings/settings.module");
 const app_controller_1 = require("./app.controller");
 const app_service_1 = require("./app.service");
 let AppModule = class AppModule {
@@ -49,6 +51,8 @@ exports.AppModule = AppModule = __decorate([
             printing_module_1.PrintingModule,
             whatsapp_module_1.WhatsAppModule,
             sync_module_1.SyncModule,
+            audit_module_1.AuditModule,
+            settings_module_1.SettingsModule,
         ],
         controllers: [app_controller_1.AppController],
         providers: [app_service_1.AppService],

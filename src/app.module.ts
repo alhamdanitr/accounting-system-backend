@@ -14,6 +14,8 @@ import { ReportsModule } from './reports/reports.module';
 import { PrintingModule } from './printing/printing.module';
 import { WhatsAppModule } from './whatsapp/whatsapp.module';
 import { SyncModule } from './sync/sync.module';
+import { AuditModule } from './audit/audit.module';
+import { SettingsModule } from './settings/settings.module';
 import { AppController } from './app.controller';
 import { AppService } from './app.service';
 
@@ -37,6 +39,8 @@ import { AppService } from './app.service';
     PrintingModule,
     WhatsAppModule,
     SyncModule,
+    AuditModule,
+    SettingsModule,
   ],
   controllers: [AppController],
   providers: [AppService],
