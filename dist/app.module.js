@@ -14,6 +14,8 @@ const health_module_1 = require("./health/health.module");
 const company_module_1 = require("./company/company.module");
 const users_module_1 = require("./users/users.module");
 const auth_module_1 = require("./auth/auth.module");
+const products_module_1 = require("./products/products.module");
+const inventory_module_1 = require("./inventory/inventory.module");
 const app_controller_1 = require("./app.controller");
 const app_service_1 = require("./app.service");
 let AppModule = class AppModule {
@@ -31,6 +33,8 @@ exports.AppModule = AppModule = __decorate([
             company_module_1.CompanyModule,
             users_module_1.UsersModule,
             auth_module_1.AuthModule,
+            products_module_1.ProductsModule,
+            inventory_module_1.InventoryModule,
         ],
         controllers: [app_controller_1.AppController],
         providers: [app_service_1.AppService],
