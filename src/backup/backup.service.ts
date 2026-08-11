@@ -1,5 +1,4 @@
 import { Injectable, Logger } from '@nestjs/common';
-import { Cron, CronExpression } from '@nestjs/schedule';
 import { exec } from 'child_process';
 import { promisify } from 'util';
 import * as path from 'path';
@@ -18,24 +17,20 @@ export class BackupService {
     }
   }
 
-  @Cron(CronExpression.EVERY_DAY_AT_MIDNIGHT)
+  // Daily backup handler (triggered by scheduler or cron)
   async handleDailyBackup() {
     this.logger.log('Starting daily database backup...');
     
     const timestamp = new Date().toISOString().replace(/[:.]/g, '-');
     const backupFile = path.join(this.backupDir, `backup-${timestamp}.sql`);
     
-    // In a real production environment, we use the actual DB credentials
     const dbUrl = process.env.DATABASE_URL || 'postgresql://user:password@localhost:5432/accounting_db';
     
     try {
-      // Using pg_dump for PostgreSQL backups
       const command = `pg_dump "${dbUrl}" -F c -f "${backupFile}"`;
       await execAsync(command);
       
       this.logger.log(`Database backup completed successfully: ${backupFile}`);
-      
-      // Clean up old backups (keep last 7 days)
       await this.cleanupOldBackups();
     } catch (error) {
       this.logger.error(`Failed to create database backup: ${error.message}`);
