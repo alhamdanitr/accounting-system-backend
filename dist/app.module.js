@@ -16,6 +16,13 @@ const users_module_1 = require("./users/users.module");
 const auth_module_1 = require("./auth/auth.module");
 const products_module_1 = require("./products/products.module");
 const inventory_module_1 = require("./inventory/inventory.module");
+const sales_module_1 = require("./sales/sales.module");
+const purchases_module_1 = require("./purchases/purchases.module");
+const accounting_module_1 = require("./accounting/accounting.module");
+const reports_module_1 = require("./reports/reports.module");
+const printing_module_1 = require("./printing/printing.module");
+const whatsapp_module_1 = require("./whatsapp/whatsapp.module");
+const sync_module_1 = require("./sync/sync.module");
 const app_controller_1 = require("./app.controller");
 const app_service_1 = require("./app.service");
 let AppModule = class AppModule {
@@ -35,6 +42,13 @@ exports.AppModule = AppModule = __decorate([
             auth_module_1.AuthModule,
             products_module_1.ProductsModule,
             inventory_module_1.InventoryModule,
+            sales_module_1.SalesModule,
+            purchases_module_1.PurchasesModule,
+            accounting_module_1.AccountingModule,
+            reports_module_1.ReportsModule,
+            printing_module_1.PrintingModule,
+            whatsapp_module_1.WhatsAppModule,
+            sync_module_1.SyncModule,
         ],
         controllers: [app_controller_1.AppController],
         providers: [app_service_1.AppService],

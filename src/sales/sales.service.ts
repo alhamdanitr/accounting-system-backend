@@ -34,9 +34,15 @@ export class SalesService {
       throw new NotFoundException('المستودع غير موجود');
     }
 
-    // حساب المجاميع والخصومات
     let subTotal = 0;
-    const computedItems = [];
+    const computedItems: Array<{
+      productId: string;
+      quantity: number;
+      unitPrice: number;
+      discount: number;
+      taxRate: number;
+      total: number;
+    }> = [];
 
     for (const itemDto of dto.items) {
       const product = await this.prisma.product.findUnique({
@@ -46,7 +52,6 @@ export class SalesService {
         throw new NotFoundException(`المنتج بالمعرف ${itemDto.productId} غير موجود`);
       }
 
-      // التحقق من توفر المخزون
       const stockBalance = await this.prisma.stockBalance.findUnique({
         where: {
           warehouseId_productId: {
@@ -79,19 +84,16 @@ export class SalesService {
     const paidAmount = dto.paidAmount;
     const dueAmount = Math.max(0, grandTotal - paidAmount);
 
-    let status = SaleStatus.PAID;
+    let status: SaleStatus = SaleStatus.PAID;
     if (paidAmount === 0) {
       status = SaleStatus.CREDIT;
     } else if (paidAmount < grandTotal) {
       status = SaleStatus.PARTIALLY_PAID;
     }
 
-    // رقم الفاتورة التسلسلي
     const invoiceNumber = `INV-${Date.now().toString().slice(-8)}`;
 
-    // تنفيذ عملية البيع ضمن Transaction لضمان السلامة
     const sale = await this.prisma.$transaction(async (tx) => {
-      // 1. إنشاء الفاتورة وعناصرها
       const newSale = await tx.sale.create({
         data: {
           tenantId: dto.tenantId,
@@ -115,7 +117,6 @@ export class SalesService {
         include: { items: true, customer: true },
       });
 
-      // 2. تحديث المخزون وحركات المخزون (Stock Movements) لكل منتج مباع
       for (const item of computedItems) {
         let balanceRecord = await tx.stockBalance.findUnique({
           where: {
@@ -159,7 +160,6 @@ export class SalesService {
         });
       }
 
-      // 3. إذا كان البيع أجلاً، تحديث رصيد مديونية العميل
       if (dto.customerId && dueAmount > 0) {
         await tx.customer.update({
           where: { id: dto.customerId },

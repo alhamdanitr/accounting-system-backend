@@ -34,7 +34,14 @@ export class PurchasesService {
     }
 
     let subTotal = 0;
-    const computedItems = [];
+    const computedItems: Array<{
+      productId: string;
+      quantity: number;
+      unitPrice: number;
+      discount: number;
+      taxRate: number;
+      total: number;
+    }> = [];
 
     for (const itemDto of dto.items) {
       const product = await this.prisma.product.findUnique({
@@ -62,7 +69,7 @@ export class PurchasesService {
     const paidAmount = dto.paidAmount;
     const dueAmount = Math.max(0, grandTotal - paidAmount);
 
-    let status = PurchaseStatus.PAID;
+    let status: PurchaseStatus = PurchaseStatus.PAID;
     if (paidAmount === 0) {
       status = PurchaseStatus.CREDIT;
     } else if (paidAmount < grandTotal) {
@@ -72,7 +79,6 @@ export class PurchasesService {
     const invoiceNumber = `PUR-${Date.now().toString().slice(-8)}`;
 
     const purchase = await this.prisma.$transaction(async (tx) => {
-      // 1. إنشاء فاتورة الشراء وعناصرها
       const newPurchase = await tx.purchase.create({
         data: {
           tenantId: dto.tenantId,
@@ -96,7 +102,6 @@ export class PurchasesService {
         include: { items: true, supplier: true },
       });
 
-      // 2. زيادة المخزون وتسجيل حركة المخزون (Stock Movement PURCHASE_IN) لكل منتج
       for (const item of computedItems) {
         let balanceRecord = await tx.stockBalance.findUnique({
           where: {
@@ -140,7 +145,6 @@ export class PurchasesService {
         });
       }
 
-      // 3. إذا كان الشراء أجلاً، تحديث رصيد الديون للمورد
       if (dto.supplierId && dueAmount > 0) {
         await tx.supplier.update({
           where: { id: dto.supplierId },
