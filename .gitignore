@@ -1,0 +1,22 @@
+# dependencies
+node_modules/
+.pnpm-store/
+
+# build output
+dist/
+coverage/
+
+# local environment files
+.env
+.env.*
+!.env.example
+
+# Prisma local artifacts
+prisma/*.db
+prisma/*.db-journal
+
+# OS and editor files
+.DS_Store
+*.log
+.vscode/
+.idea/
