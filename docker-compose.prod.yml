@@ -1,0 +1,31 @@
+version: '3.8'
+
+services:
+  postgres:
+    image: postgres:15-alpine
+    container_name: accounting_postgres_prod
+    restart: always
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: secure_password_123
+      POSTGRES_DB: accounting_prod
+    ports:
+      - "5432:5432"
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+
+  backend:
+    build: .
+    container_name: accounting_backend_prod
+    restart: always
+    ports:
+      - "3000:3000"
+    environment:
+      DATABASE_URL: postgresql://postgres:secure_password_123@postgres:5432/accounting_prod?schema=public
+      JWT_SECRET: super_secret_jwt_key_accounting_2026
+      PORT: 3000
+    depends_on:
+      - postgres
+
+volumes:
+  pgdata:
