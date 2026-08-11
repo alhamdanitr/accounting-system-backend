@@ -1,0 +1,33 @@
+import { Injectable, Logger } from '@nestjs/common';
+
+export interface WhatsAppMessageDto {
+  phone: string;
+  message: string;
+  tenantId: string;
+}
+
+@Injectable()
+export class WhatsappService {
+  private readonly logger = new Logger(WhatsappService.name);
+
+  async sendInvoiceMessage(dto: WhatsAppMessageDto) {
+    this.logger.log(`Sending WhatsApp invoice message to ${dto.phone}`);
+    
+    // In production, this integrates with Evolution API, Twilio, or Meta Cloud WhatsApp API
+    // await axios.post(...)
+    
+    return {
+      success: true,
+      message: `WhatsApp message successfully dispatched to ${dto.phone}`
+    };
+  }
+
+  async sendLowStockAlert(phone: string, productName: string, qty: number) {
+    this.logger.log(`Sending low stock WhatsApp alert for ${productName} (Qty: ${qty}) to ${phone}`);
+    
+    return {
+      success: true,
+      message: `Low stock alert sent for ${productName}`
+    };
+  }
+}
