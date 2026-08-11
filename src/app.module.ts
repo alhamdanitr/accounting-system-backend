@@ -9,6 +9,7 @@ import { ProductsModule } from './products/products.module';
 import { InventoryModule } from './inventory/inventory.module';
 import { SalesModule } from './sales/sales.module';
 import { PurchasesModule } from './purchases/purchases.module';
+import { AccountingModule } from './accounting/accounting.module';
 import { AppController } from './app.controller';
 import { AppService } from './app.service';
 
@@ -27,6 +28,7 @@ import { AppService } from './app.service';
     InventoryModule,
     SalesModule,
     PurchasesModule,
+    AccountingModule,
   ],
   controllers: [AppController],
   providers: [AppService],

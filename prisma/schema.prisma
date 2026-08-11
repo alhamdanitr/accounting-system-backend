@@ -91,6 +91,20 @@ enum PaymentType {
   CREDIT
 }
 
+enum AccountType {
+  ASSET
+  LIABILITY
+  EQUITY
+  REVENUE
+  EXPENSE
+}
+
+enum JournalStatus {
+  DRAFT
+  POSTED
+  REVERSED
+}
+
 model Company {
   id           String          @id @default(uuid())
   name         String
@@ -113,6 +127,10 @@ model Company {
   suppliers    Supplier[]
   sales        Sale[]
   purchases    Purchase[]
+  accounts     Account[]
+  journals     JournalEntry[]
+  cashboxes    Cashbox[]
+  expenses     Expense[]
   operations   SyncOperation[]
   conflicts    SyncConflict[]
   auditLogs    AuditLog[]
@@ -163,6 +181,8 @@ model User {
   stockMovements StockMovement[] @relation("MovementCreator")
   sales          Sale[]          @relation("SellerUser")
   purchases      Purchase[]      @relation("BuyerUser")
+  journals       JournalEntry[]  @relation("JournalCreator")
+  expenses       Expense[]
 
   @@unique([tenantId, email])
   @@index([tenantId, status])
@@ -458,7 +478,7 @@ model Supplier {
   phone        String?
   email        String?
   address      String?
-  balance      Float                 @default(0) // دائن موجب، مدين سالب
+  balance      Float                 @default(0)
   createdAt    DateTime              @default(now())
   updatedAt    DateTime              @updatedAt
   purchases    Purchase[]
@@ -473,7 +493,7 @@ model SupplierTransaction {
   supplierId  String
   supplier    Supplier @relation(fields: [supplierId], references: [id], onDelete: Cascade)
   amount      Float
-  type        String   // PURCHASE, PAYMENT, RETURN
+  type        String
   referenceId String?
   notes       String?
   createdAt   DateTime @default(now())
@@ -573,6 +593,85 @@ model PurchaseItem {
 
   @@index([purchaseId])
   @@index([productId])
+}
+
+model Account {
+  id          String              @id @default(uuid())
+  tenantId    String
+  company     Company             @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  code        String              // 1010, 2010 etc.
+  name        String
+  type        AccountType
+  parentId    String?
+  parent      Account?            @relation("AccountHierarchy", fields: [parentId], references: [id], onDelete: SetNull)
+  children    Account[]           @relation("AccountHierarchy")
+  lines       JournalEntryLine[]
+  createdAt   DateTime            @default(now())
+  updatedAt   DateTime            @updatedAt
+
+  @@unique([tenantId, code])
+  @@index([tenantId, type])
+}
+
+model JournalEntry {
+  id            String             @id @default(uuid())
+  tenantId      String
+  company       Company            @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  entryNumber   String
+  reference     String?
+  description   String
+  status        JournalStatus      @default(POSTED)
+  createdById   String?
+  creator       User?              @relation("JournalCreator", fields: [createdById], references: [id], onDelete: SetNull)
+  createdAt     DateTime           @default(now())
+  updatedAt     DateTime           @updatedAt
+  lines         JournalEntryLine[]
+
+  @@unique([tenantId, entryNumber])
+  @@index([tenantId, status])
+}
+
+model JournalEntryLine {
+  id             String       @id @default(uuid())
+  journalEntryId String
+  journalEntry   JournalEntry @relation(fields: [journalEntryId], references: [id], onDelete: Cascade)
+  accountId      String
+  account        Account      @relation(fields: [accountId], references: [id], onDelete: Restrict)
+  debit          Float        @default(0)
+  credit         Float        @default(0)
+  description    String?
+
+  @@index([journalEntryId])
+  @@index([accountId])
+}
+
+model Cashbox {
+  id        String   @id @default(uuid())
+  tenantId  String
+  company   Company  @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  name      String
+  code      String
+  balance   Float    @default(0)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@unique([tenantId, code])
+  @@index([tenantId])
+}
+
+model Expense {
+  id          String   @id @default(uuid())
+  tenantId    String
+  company     Company  @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  userId      String?
+  user        User?    @relation(fields: [userId], references: [id], onDelete: SetNull)
+  category    String   // إيجار، كهرباء، رواتب، صيانة
+  amount      Float
+  notes       String?
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  @@index([tenantId])
 }
 
 model SyncOperation {
