@@ -8,6 +8,7 @@ import { AuthModule } from './auth/auth.module';
 import { ProductsModule } from './products/products.module';
 import { InventoryModule } from './inventory/inventory.module';
 import { SalesModule } from './sales/sales.module';
+import { PurchasesModule } from './purchases/purchases.module';
 import { AppController } from './app.controller';
 import { AppService } from './app.service';
 
@@ -25,6 +26,7 @@ import { AppService } from './app.service';
     ProductsModule,
     InventoryModule,
     SalesModule,
+    PurchasesModule,
   ],
   controllers: [AppController],
   providers: [AppService],

@@ -74,6 +74,16 @@ enum SaleStatus {
   RETURNED
 }
 
+enum PurchaseStatus {
+  DRAFT
+  CONFIRMED
+  PAID
+  PARTIALLY_PAID
+  CREDIT
+  CANCELLED
+  RETURNED
+}
+
 enum PaymentType {
   CASH
   CARD
@@ -100,7 +110,9 @@ model Company {
   units        Unit[]
   products     Product[]
   customers    Customer[]
+  suppliers    Supplier[]
   sales        Sale[]
+  purchases    Purchase[]
   operations   SyncOperation[]
   conflicts    SyncConflict[]
   auditLogs    AuditLog[]
@@ -122,6 +134,7 @@ model Branch {
   devices    Device[]
   warehouses Warehouse[]
   sales      Sale[]
+  purchases  Purchase[]
   createdAt  DateTime    @default(now())
   updatedAt  DateTime    @updatedAt
 
@@ -149,6 +162,7 @@ model User {
   auditLogs      AuditLog[]
   stockMovements StockMovement[] @relation("MovementCreator")
   sales          Sale[]          @relation("SellerUser")
+  purchases      Purchase[]      @relation("BuyerUser")
 
   @@unique([tenantId, email])
   @@index([tenantId, status])
@@ -255,6 +269,7 @@ model Warehouse {
   stockBalances  StockBalance[]
   stockMovements StockMovement[]
   sales          Sale[]
+  purchases      Purchase[]
 
   @@unique([tenantId, code])
   @@index([tenantId, active])
@@ -334,6 +349,7 @@ model Product {
   stockMovements   StockMovement[]
   serialNumbers    SerialNumber[]
   saleItems        SaleItem[]
+  purchaseItems    PurchaseItem[]
 
   @@unique([tenantId, sku])
   @@index([tenantId, barcode])
@@ -411,7 +427,7 @@ model Customer {
   email        String?
   address      String?
   creditLimit  Float                @default(0)
-  balance      Float                @default(0) // مدين موجب، دائن سالب
+  balance      Float                @default(0)
   createdAt    DateTime             @default(now())
   updatedAt    DateTime             @updatedAt
   sales        Sale[]
@@ -426,12 +442,43 @@ model CustomerTransaction {
   customerId  String
   customer    Customer @relation(fields: [customerId], references: [id], onDelete: Cascade)
   amount      Float
-  type        String   // SALE, PAYMENT, RETURN, OPENING
+  type        String
   referenceId String?
   notes       String?
   createdAt   DateTime @default(now())
 
   @@index([customerId])
+}
+
+model Supplier {
+  id           String                @id @default(uuid())
+  tenantId     String
+  company      Company               @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  name         String
+  phone        String?
+  email        String?
+  address      String?
+  balance      Float                 @default(0) // دائن موجب، مدين سالب
+  createdAt    DateTime              @default(now())
+  updatedAt    DateTime              @updatedAt
+  purchases    Purchase[]
+  transactions SupplierTransaction[]
+
+  @@index([tenantId, phone])
+}
+
+model SupplierTransaction {
+  id          String   @id @default(uuid())
+  tenantId    String
+  supplierId  String
+  supplier    Supplier @relation(fields: [supplierId], references: [id], onDelete: Cascade)
+  amount      Float
+  type        String   // PURCHASE, PAYMENT, RETURN
+  referenceId String?
+  notes       String?
+  createdAt   DateTime @default(now())
+
+  @@index([supplierId])
 }
 
 model Sale {
@@ -478,6 +525,53 @@ model SaleItem {
   total      Float
 
   @@index([saleId])
+  @@index([productId])
+}
+
+model Purchase {
+  id            String         @id @default(uuid())
+  tenantId      String
+  company       Company        @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  branchId      String?
+  branch        Branch?        @relation(fields: [branchId], references: [id], onDelete: SetNull)
+  warehouseId   String
+  warehouse     Warehouse      @relation(fields: [warehouseId], references: [id], onDelete: Restrict)
+  supplierId    String?
+  supplier      Supplier?      @relation(fields: [supplierId], references: [id], onDelete: SetNull)
+  userId        String?
+  buyer         User?          @relation("BuyerUser", fields: [userId], references: [id], onDelete: SetNull)
+  invoiceNumber String
+  status        PurchaseStatus @default(CONFIRMED)
+  subTotal      Float
+  discount      Float          @default(0)
+  taxTotal      Float          @default(0)
+  grandTotal    Float
+  paidAmount    Float          @default(0)
+  dueAmount     Float          @default(0)
+  paymentType   PaymentType    @default(CASH)
+  notes         String?
+  createdAt     DateTime       @default(now())
+  updatedAt     DateTime       @updatedAt
+  items         PurchaseItem[]
+
+  @@unique([tenantId, invoiceNumber])
+  @@index([tenantId, status])
+  @@index([supplierId])
+}
+
+model PurchaseItem {
+  id         String   @id @default(uuid())
+  purchaseId String
+  purchase   Purchase @relation(fields: [purchaseId], references: [id], onDelete: Cascade)
+  productId  String
+  product    Product  @relation(fields: [productId], references: [id], onDelete: Restrict)
+  quantity   Float
+  unitPrice  Float
+  discount   Float    @default(0)
+  taxRate    Float    @default(0)
+  total      Float
+
+  @@index([purchaseId])
   @@index([productId])
 }
 
