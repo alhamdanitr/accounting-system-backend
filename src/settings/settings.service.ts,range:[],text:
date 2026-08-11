@@ -1,0 +1,37 @@
+import { Injectable, Logger } from '@nestjs/common';
+import { PrismaService } from '../prisma/prisma.service';
+
+export interface UpdateSettingDto {
+  tenantId: string;
+  key: string;
+  value: string;
+  userId: string;
+}
+
+@Injectable()
+export class SettingsService {
+  private readonly logger = new Logger(SettingsService.name);
+
+  constructor(private prisma: PrismaService) {}
+
+  async getSettings(tenantId: string) {
+    this.logger.log(`Fetching settings for tenant: ${tenantId}`);
+    return this.prisma.setting.findMany({
+      where: { tenantId }
+    });
+  }
+
+  async updateSetting(dto: UpdateSettingDto) {
+    this.logger.log(`Updating setting ${dto.key} for tenant ${dto.tenantId}`);
+
+    return this.prisma.setting.upsert({
+      where: { tenantId_key: { tenantId: dto.tenantId, key: dto.key } },
+      update: { value: dto.value },
+      create: {
+        tenantId: dto.tenantId,
+        key: dto.key,
+        value: dto.value
+      }
+    });
+  }
+}
