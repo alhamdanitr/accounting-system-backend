@@ -11,6 +11,7 @@ import { SalesModule } from './sales/sales.module';
 import { PurchasesModule } from './purchases/purchases.module';
 import { AccountingModule } from './accounting/accounting.module';
 import { ReportsModule } from './reports/reports.module';
+import { PrintingModule } from './printing/printing.module';
 import { AppController } from './app.controller';
 import { AppService } from './app.service';
 
@@ -31,6 +32,7 @@ import { AppService } from './app.service';
     PurchasesModule,
     AccountingModule,
     ReportsModule,
+    PrintingModule,
   ],
   controllers: [AppController],
   providers: [AppService],
