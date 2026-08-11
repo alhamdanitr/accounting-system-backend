@@ -9,7 +9,7 @@ export interface VoucherDto {
   referenceId?: string;
   notes: string;
   userId: string;
-  accountId: string; // Customer, Supplier, or Expense Account ID
+  accountId: string; // Customer or Supplier ID
   cashboxId: string; // The cashbox receiving or paying the money
 }
 
@@ -17,7 +17,7 @@ export interface ExpenseDto {
   tenantId: string;
   amount: number;
   currencyCode: string;
-  expenseCategoryId: string;
+  expenseCategoryId: string; // String category like "Rent", "Electricity"
   cashboxId: string;
   notes: string;
   userId: string;
@@ -50,14 +50,13 @@ export class VoucherService {
         data: { balance: newCashBalance }
       });
 
-      // 2. Determine if account is Customer or Supplier and update balance
-      // Note: In a real system, we'd check account type first. Assuming Customer for RECEIPT and Supplier for PAYMENT for this example logic.
+      // 2. Update Customer/Supplier Balance
       if (dto.type === 'RECEIPT') {
         const customer = await tx.customer.findUnique({ where: { id: dto.accountId } });
         if (customer) {
           await tx.customer.update({
             where: { id: dto.accountId },
-            data: { balance: customer.balance - dto.amount } // Receipt reduces customer debt
+            data: { balance: customer.balance - dto.amount }
           });
           
           await tx.customerTransaction.create({
@@ -75,7 +74,7 @@ export class VoucherService {
         if (supplier) {
           await tx.supplier.update({
             where: { id: dto.accountId },
-            data: { balance: supplier.balance - dto.amount } // Payment reduces our debt to supplier
+            data: { balance: supplier.balance - dto.amount }
           });
 
           await tx.supplierTransaction.create({
@@ -95,7 +94,7 @@ export class VoucherService {
   }
 
   async processExpense(dto: ExpenseDto) {
-    this.logger.log(`Processing Expense: ${dto.amount} ${dto.currencyCode} for category ${dto.expenseCategoryId}`);
+    this.logger.log(`Processing Expense: ${dto.amount} ${dto.currencyCode}`);
 
     return this.prisma.$transaction(async (tx) => {
       // 1. Deduct from Cashbox
@@ -109,15 +108,14 @@ export class VoucherService {
         data: { balance: cashbox.balance - dto.amount }
       });
 
-      // 2. Record Expense
+      // 2. Record Expense (Using only fields available in schema.prisma)
       const expense = await tx.expense.create({
         data: {
           tenantId: dto.tenantId,
+          userId: dto.userId,
           category: dto.expenseCategoryId,
           amount: dto.amount,
-          notes: dto.notes,
-          userId: dto.userId,
-          cashboxId: dto.cashboxId
+          notes: dto.notes
         }
       });
 
