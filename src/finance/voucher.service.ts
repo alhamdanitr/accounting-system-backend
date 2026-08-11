@@ -113,7 +113,7 @@ export class VoucherService {
       const expense = await tx.expense.create({
         data: {
           tenantId: dto.tenantId,
-          category: { connect: { id: dto.expenseCategoryId } },
+          category: dto.expenseCategoryId,
           amount: dto.amount,
           notes: dto.notes,
           userId: dto.userId,
