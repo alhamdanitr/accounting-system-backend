@@ -64,6 +64,23 @@ enum SerialStatus {
   TRANSFERRED
 }
 
+enum SaleStatus {
+  DRAFT
+  CONFIRMED
+  PAID
+  PARTIALLY_PAID
+  CREDIT
+  CANCELLED
+  RETURNED
+}
+
+enum PaymentType {
+  CASH
+  CARD
+  BANK_TRANSFER
+  CREDIT
+}
+
 model Company {
   id           String          @id @default(uuid())
   name         String
@@ -82,6 +99,8 @@ model Company {
   brands       Brand[]
   units        Unit[]
   products     Product[]
+  customers    Customer[]
+  sales        Sale[]
   operations   SyncOperation[]
   conflicts    SyncConflict[]
   auditLogs    AuditLog[]
@@ -102,6 +121,7 @@ model Branch {
   users      User[]
   devices    Device[]
   warehouses Warehouse[]
+  sales      Sale[]
   createdAt  DateTime    @default(now())
   updatedAt  DateTime    @updatedAt
 
@@ -128,6 +148,7 @@ model User {
   refreshTokens  RefreshToken[]
   auditLogs      AuditLog[]
   stockMovements StockMovement[] @relation("MovementCreator")
+  sales          Sale[]          @relation("SellerUser")
 
   @@unique([tenantId, email])
   @@index([tenantId, status])
@@ -233,6 +254,7 @@ model Warehouse {
   updatedAt      DateTime        @updatedAt
   stockBalances  StockBalance[]
   stockMovements StockMovement[]
+  sales          Sale[]
 
   @@unique([tenantId, code])
   @@index([tenantId, active])
@@ -269,8 +291,8 @@ model Unit {
   id        String    @id @default(uuid())
   tenantId  String
   company   Company   @relation(fields: [tenantId], references: [id], onDelete: Cascade)
-  name      String    // قطعة، متر، صندوق، لفة
-  code      String    // PCS, M, BOX, ROLL
+  name      String
+  code      String
   createdAt DateTime  @default(now())
   updatedAt DateTime  @updatedAt
   products  Product[]
@@ -280,37 +302,38 @@ model Unit {
 }
 
 model Product {
-  id               String          @id @default(uuid())
+  id               String           @id @default(uuid())
   tenantId         String
-  company          Company         @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  company          Company          @relation(fields: [tenantId], references: [id], onDelete: Cascade)
   sku              String
   barcode          String?
   arabicName       String
   englishName      String?
   categoryId       String?
-  category         Category?       @relation(fields: [categoryId], references: [id], onDelete: SetNull)
+  category         Category?        @relation(fields: [categoryId], references: [id], onDelete: SetNull)
   brandId          String?
-  brand            Brand?          @relation(fields: [brandId], references: [id], onDelete: SetNull)
+  brand            Brand?           @relation(fields: [brandId], references: [id], onDelete: SetNull)
   unitId           String?
-  unit             Unit?           @relation(fields: [unitId], references: [id], onDelete: SetNull)
-  purchasePrice    Float           @default(0)
-  salePrice        Float           @default(0)
-  wholesalePrice   Float           @default(0)
-  minimumPrice     Float           @default(0)
-  taxRate          Float           @default(0)
-  minimumStock     Float           @default(0)
-  maximumStock     Float           @default(0)
-  serialTracking   Boolean         @default(false)
-  expiryTracking   Boolean         @default(false)
-  active           Boolean         @default(true)
+  unit             Unit?            @relation(fields: [unitId], references: [id], onDelete: SetNull)
+  purchasePrice    Float            @default(0)
+  salePrice        Float            @default(0)
+  wholesalePrice   Float            @default(0)
+  minimumPrice     Float            @default(0)
+  taxRate          Float            @default(0)
+  minimumStock     Float            @default(0)
+  maximumStock     Float            @default(0)
+  serialTracking   Boolean          @default(false)
+  expiryTracking   Boolean          @default(false)
+  active           Boolean          @default(true)
   imageUrl         String?
   description      String?
-  createdAt        DateTime        @default(now())
-  updatedAt        DateTime        @updatedAt
+  createdAt        DateTime         @default(now())
+  updatedAt        DateTime         @updatedAt
   barcodes         ProductBarcode[]
   stockBalances    StockBalance[]
   stockMovements   StockMovement[]
   serialNumbers    SerialNumber[]
+  saleItems        SaleItem[]
 
   @@unique([tenantId, sku])
   @@index([tenantId, barcode])
@@ -350,9 +373,9 @@ model StockMovement {
   productId    String
   product      Product           @relation(fields: [productId], references: [id], onDelete: Cascade)
   type         StockMovementType
-  quantity     Float             // موجب للوارد، سالب للصادر
+  quantity     Float
   balanceAfter Float
-  referenceId  String?           // معرف الفاتورة أو الحركة المرتبطة
+  referenceId  String?
   notes        String?
   createdById  String?
   creator      User?             @relation("MovementCreator", fields: [createdById], references: [id], onDelete: SetNull)
@@ -376,6 +399,85 @@ model SerialNumber {
   updatedAt    DateTime     @updatedAt
 
   @@index([tenantId, status])
+  @@index([productId])
+}
+
+model Customer {
+  id           String               @id @default(uuid())
+  tenantId     String
+  company      Company              @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  name         String
+  phone        String?
+  email        String?
+  address      String?
+  creditLimit  Float                @default(0)
+  balance      Float                @default(0) // مدين موجب، دائن سالب
+  createdAt    DateTime             @default(now())
+  updatedAt    DateTime             @updatedAt
+  sales        Sale[]
+  transactions CustomerTransaction[]
+
+  @@index([tenantId, phone])
+}
+
+model CustomerTransaction {
+  id          String   @id @default(uuid())
+  tenantId    String
+  customerId  String
+  customer    Customer @relation(fields: [customerId], references: [id], onDelete: Cascade)
+  amount      Float
+  type        String   // SALE, PAYMENT, RETURN, OPENING
+  referenceId String?
+  notes       String?
+  createdAt   DateTime @default(now())
+
+  @@index([customerId])
+}
+
+model Sale {
+  id            String        @id @default(uuid())
+  tenantId      String
+  company       Company       @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  branchId      String?
+  branch        Branch?       @relation(fields: [branchId], references: [id], onDelete: SetNull)
+  warehouseId   String
+  warehouse     Warehouse     @relation(fields: [warehouseId], references: [id], onDelete: Restrict)
+  customerId    String?
+  customer      Customer?     @relation(fields: [customerId], references: [id], onDelete: SetNull)
+  userId        String?
+  seller        User?         @relation("SellerUser", fields: [userId], references: [id], onDelete: SetNull)
+  invoiceNumber String
+  status        SaleStatus    @default(CONFIRMED)
+  subTotal      Float
+  discount      Float         @default(0)
+  taxTotal      Float         @default(0)
+  grandTotal    Float
+  paidAmount    Float         @default(0)
+  dueAmount     Float         @default(0)
+  paymentType   PaymentType   @default(CASH)
+  notes         String?
+  createdAt     DateTime      @default(now())
+  updatedAt     DateTime      @updatedAt
+  items         SaleItem[]
+
+  @@unique([tenantId, invoiceNumber])
+  @@index([tenantId, status])
+  @@index([customerId])
+}
+
+model SaleItem {
+  id         String   @id @default(uuid())
+  saleId     String
+  sale       Sale     @relation(fields: [saleId], references: [id], onDelete: Cascade)
+  productId  String
+  product    Product  @relation(fields: [productId], references: [id], onDelete: Restrict)
+  quantity   Float
+  unitPrice  Float
+  discount   Float    @default(0)
+  taxRate    Float    @default(0)
+  total      Float
+
+  @@index([saleId])
   @@index([productId])
 }
 
