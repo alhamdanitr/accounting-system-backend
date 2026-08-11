@@ -12,6 +12,7 @@ import { PurchasesModule } from './purchases/purchases.module';
 import { AccountingModule } from './accounting/accounting.module';
 import { ReportsModule } from './reports/reports.module';
 import { PrintingModule } from './printing/printing.module';
+import { WhatsAppModule } from './whatsapp/whatsapp.module';
 import { AppController } from './app.controller';
 import { AppService } from './app.service';
 
@@ -33,6 +34,7 @@ import { AppService } from './app.service';
     AccountingModule,
     ReportsModule,
     PrintingModule,
+    WhatsAppModule,
   ],
   controllers: [AppController],
   providers: [AppService],
