@@ -10,6 +10,7 @@ import { InventoryModule } from './inventory/inventory.module';
 import { SalesModule } from './sales/sales.module';
 import { PurchasesModule } from './purchases/purchases.module';
 import { AccountingModule } from './accounting/accounting.module';
+import { ReportsModule } from './reports/reports.module';
 import { AppController } from './app.controller';
 import { AppService } from './app.service';
 
@@ -29,6 +30,7 @@ import { AppService } from './app.service';
     SalesModule,
     PurchasesModule,
     AccountingModule,
+    ReportsModule,
   ],
   controllers: [AppController],
   providers: [AppService],
