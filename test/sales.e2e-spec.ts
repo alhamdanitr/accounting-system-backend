@@ -113,4 +113,24 @@ describe('Sales & POS E2E', () => {
 
     expect(stockRes.body.quantity).toEqual(14);
   });
+
+  it('should reject a sale that uses another tenant warehouse', async () => {
+    await request(app.getHttpServer())
+      .post('/api/v1/sales')
+      .send({
+        tenantId: '11111111-1111-4111-8111-111111111111',
+        warehouseId,
+        customerId,
+        paymentType: PaymentType.CASH,
+        paidAmount: 30000,
+        items: [
+          {
+            productId,
+            quantity: 1,
+            unitPrice: 30000,
+          },
+        ],
+      })
+      .expect(404);
+  });
 });

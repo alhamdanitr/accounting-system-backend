@@ -27,11 +27,26 @@ export class SalesService {
   }
 
   async createSale(dto: CreateSaleDto): Promise<Sale> {
-    const warehouse = await this.prisma.warehouse.findUnique({
-      where: { id: dto.warehouseId },
+    const warehouse = await this.prisma.warehouse.findFirst({
+      where: {
+        id: dto.warehouseId,
+        tenantId: dto.tenantId,
+      },
     });
     if (!warehouse) {
       throw new NotFoundException('المستودع غير موجود');
+    }
+
+    if (dto.customerId) {
+      const customer = await this.prisma.customer.findFirst({
+        where: {
+          id: dto.customerId,
+          tenantId: dto.tenantId,
+        },
+      });
+      if (!customer) {
+        throw new NotFoundException('العميل غير موجود ضمن الشركة المحددة');
+      }
     }
 
     let subTotal = 0;
@@ -45,8 +60,11 @@ export class SalesService {
     }> = [];
 
     for (const itemDto of dto.items) {
-      const product = await this.prisma.product.findUnique({
-        where: { id: itemDto.productId },
+      const product = await this.prisma.product.findFirst({
+        where: {
+          id: itemDto.productId,
+          tenantId: dto.tenantId,
+        },
       });
       if (!product) {
         throw new NotFoundException(`المنتج بالمعرف ${itemDto.productId} غير موجود`);
