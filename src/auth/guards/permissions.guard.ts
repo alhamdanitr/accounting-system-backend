@@ -19,7 +19,7 @@ export class PermissionsGuard implements CanActivate {
 
     // Fetch user permissions from DB
     const userWithRoles = await this.prisma.user.findUnique({
-      where: { id: user.id },
+      where: { id: user.userId },
       include: {
         roles: {
           include: {
