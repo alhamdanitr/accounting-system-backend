@@ -1,18 +1,22 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
 import { SyncPushDto } from './dto/sync.dto';
-import { SyncOperationStatus } from '@prisma/client';
+import { DeviceStatus, SyncOperationStatus } from '@prisma/client';
 
 @Injectable()
 export class SyncService {
   constructor(private readonly prisma: PrismaService) {}
 
   async pushOperations(dto: SyncPushDto) {
-    const device = await this.prisma.device.findUnique({
-      where: { id: dto.deviceId },
+    const device = await this.prisma.device.findFirst({
+      where: {
+        id: dto.deviceId,
+        tenantId: dto.tenantId,
+        status: DeviceStatus.ACTIVE,
+      },
     });
     if (!device) {
-      throw new NotFoundException('الجهاز غير مسجل');
+      throw new NotFoundException('الجهاز غير مسجل أو غير نشط ضمن الشركة المحددة');
     }
 
     const results = [];
@@ -59,6 +63,17 @@ export class SyncService {
   }
 
   async pullOperations(tenantId: string, deviceId: string) {
+    const device = await this.prisma.device.findFirst({
+      where: {
+        id: deviceId,
+        tenantId,
+        status: DeviceStatus.ACTIVE,
+      },
+    });
+    if (!device) {
+      throw new NotFoundException('الجهاز غير مسجل أو غير نشط ضمن الشركة المحددة');
+    }
+
     // استرجاع العمليات الحديثة أو غير المزامنة للجهاز
     const operations = await this.prisma.syncOperation.findMany({
       where: {

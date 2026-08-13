@@ -81,4 +81,19 @@ describe('Sync Engine E2E', () => {
     expect(res.body.success).toBe(true);
     expect(Array.isArray(res.body.operations)).toBe(true);
   });
+
+  it('should reject a device used by another tenant', async () => {
+    await request(app.getHttpServer())
+      .post('/api/v1/sync/push')
+      .send({
+        tenantId: '22222222-2222-4222-8222-222222222222',
+        deviceId,
+        operations: [],
+      })
+      .expect(404);
+
+    await request(app.getHttpServer())
+      .get('/api/v1/sync/pull?tenantId=22222222-2222-4222-8222-222222222222&deviceId=' + deviceId)
+      .expect(404);
+  });
 });
