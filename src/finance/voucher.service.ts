@@ -34,8 +34,15 @@ export class VoucherService {
 
     return this.prisma.$transaction(async (tx) => {
       // 1. Update Cashbox Balance
-      const cashbox = await tx.cashbox.findUnique({ where: { id: dto.cashboxId } });
-      if (!cashbox) throw new BadRequestException('Cashbox not found');
+      const cashbox = await tx.cashbox.findFirst({
+        where: {
+          id: dto.cashboxId,
+          tenantId: dto.tenantId,
+        },
+      });
+      if (!cashbox) {
+        throw new BadRequestException('Cashbox not found for tenant');
+      }
 
       const newCashBalance = dto.type === 'RECEIPT' 
         ? cashbox.balance + dto.amount 
@@ -52,7 +59,15 @@ export class VoucherService {
 
       // 2. Update Customer/Supplier Balance
       if (dto.type === 'RECEIPT') {
-        const customer = await tx.customer.findUnique({ where: { id: dto.accountId } });
+        const customer = await tx.customer.findFirst({
+          where: {
+            id: dto.accountId,
+            tenantId: dto.tenantId,
+          },
+        });
+        if (!customer) {
+          throw new BadRequestException('Customer not found for tenant');
+        }
         if (customer) {
           await tx.customer.update({
             where: { id: dto.accountId },
@@ -70,7 +85,15 @@ export class VoucherService {
           });
         }
       } else if (dto.type === 'PAYMENT') {
-        const supplier = await tx.supplier.findUnique({ where: { id: dto.accountId } });
+        const supplier = await tx.supplier.findFirst({
+          where: {
+            id: dto.accountId,
+            tenantId: dto.tenantId,
+          },
+        });
+        if (!supplier) {
+          throw new BadRequestException('Supplier not found for tenant');
+        }
         if (supplier) {
           await tx.supplier.update({
             where: { id: dto.accountId },
@@ -98,7 +121,12 @@ export class VoucherService {
 
     return this.prisma.$transaction(async (tx) => {
       // 1. Deduct from Cashbox
-      const cashbox = await tx.cashbox.findUnique({ where: { id: dto.cashboxId } });
+      const cashbox = await tx.cashbox.findFirst({
+        where: {
+          id: dto.cashboxId,
+          tenantId: dto.tenantId,
+        },
+      });
       if (!cashbox || cashbox.balance < dto.amount) {
         throw new BadRequestException('Insufficient funds in cashbox for expense');
       }
