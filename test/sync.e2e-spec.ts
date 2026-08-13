@@ -9,6 +9,7 @@ describe('Sync Engine E2E', () => {
   let prisma: PrismaService;
   let tenantId: string;
   let deviceId: string;
+  let accessToken: string;
 
   beforeAll(async () => {
     const moduleFixture: TestingModule = await Test.createTestingModule({
@@ -36,15 +37,31 @@ describe('Sync Engine E2E', () => {
     });
     tenantId = company.id;
 
-    const device = await prisma.device.create({
-      data: {
+    const email = `sync_user_${Date.now()}@example.com`;
+    await request(app.getHttpServer())
+      .post('/api/v1/users')
+      .send({
         tenantId,
-        name: 'Windows POS Terminal 1',
-        platform: 'WINDOWS',
+        email,
+        fullName: 'مستخدم المزامنة',
+        password: 'SecurePassword123',
+      })
+      .expect(201);
+
+    const loginRes = await request(app.getHttpServer())
+      .post('/api/v1/auth/login')
+      .send({
+        tenantId,
+        identifier: email,
+        password: 'SecurePassword123',
+        deviceName: 'Windows POS Terminal 1',
+        devicePlatform: 'WINDOWS',
         deviceKeyHash: `hash-${Date.now()}`,
-      },
-    });
-    deviceId = device.id;
+      })
+      .expect(200);
+
+    accessToken = loginRes.body.accessToken;
+    deviceId = loginRes.body.device.id;
   });
 
   afterAll(async () => {
@@ -54,6 +71,7 @@ describe('Sync Engine E2E', () => {
   it('should push local operations successfully (Idempotency)', async () => {
     const res = await request(app.getHttpServer())
       .post('/api/v1/sync/push')
+      .set('Authorization', `Bearer ${accessToken}`)
       .send({
         tenantId,
         deviceId,
@@ -76,6 +94,7 @@ describe('Sync Engine E2E', () => {
   it('should pull remote operations successfully', async () => {
     const res = await request(app.getHttpServer())
       .get(`/api/v1/sync/pull?tenantId=${tenantId}&deviceId=${deviceId}`)
+      .set('Authorization', `Bearer ${accessToken}`)
       .expect(200);
 
     expect(res.body.success).toBe(true);
@@ -85,15 +104,17 @@ describe('Sync Engine E2E', () => {
   it('should reject a device used by another tenant', async () => {
     await request(app.getHttpServer())
       .post('/api/v1/sync/push')
+      .set('Authorization', `Bearer ${accessToken}`)
       .send({
         tenantId: '22222222-2222-4222-8222-222222222222',
         deviceId,
         operations: [],
       })
-      .expect(404);
+      .expect(403);
 
     await request(app.getHttpServer())
       .get('/api/v1/sync/pull?tenantId=22222222-2222-4222-8222-222222222222&deviceId=' + deviceId)
-      .expect(404);
+      .set('Authorization', `Bearer ${accessToken}`)
+      .expect(403);
   });
 });

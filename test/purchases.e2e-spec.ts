@@ -100,4 +100,24 @@ describe('Purchases & Suppliers E2E', () => {
 
     expect(stockRes.body.quantity).toEqual(10);
   });
+
+  it('should reject a purchase that uses another tenant warehouse', async () => {
+    await request(app.getHttpServer())
+      .post('/api/v1/purchases')
+      .send({
+        tenantId: '33333333-3333-4333-8333-333333333333',
+        warehouseId,
+        supplierId,
+        paymentType: PaymentType.CASH,
+        paidAmount: 150000,
+        items: [
+          {
+            productId,
+            quantity: 1,
+            unitPrice: 15000,
+          },
+        ],
+      })
+      .expect(404);
+  });
 });
