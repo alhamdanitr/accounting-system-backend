@@ -127,6 +127,8 @@ model Company {
   suppliers    Supplier[]
   sales        Sale[]
   purchases    Purchase[]
+  saleReturns  SaleReturn[]
+  purchaseReturns PurchaseReturn[]
   accounts     Account[]
   journals     JournalEntry[]
   cashboxes    Cashbox[]
@@ -182,7 +184,9 @@ model User {
   sales          Sale[]          @relation("SellerUser")
   purchases      Purchase[]      @relation("BuyerUser")
   journals       JournalEntry[]  @relation("JournalCreator")
-  expenses       Expense[]
+  expenses        Expense[]
+  saleReturns     SaleReturn[]
+  purchaseReturns PurchaseReturn[]
 
   @@unique([tenantId, email])
   @@index([tenantId, status])
@@ -290,6 +294,8 @@ model Warehouse {
   stockMovements StockMovement[]
   sales          Sale[]
   purchases      Purchase[]
+  saleReturns    SaleReturn[]
+  purchaseReturns PurchaseReturn[]
 
   @@unique([tenantId, code])
   @@index([tenantId, active])
@@ -366,7 +372,9 @@ model Product {
   updatedAt        DateTime         @updatedAt
   barcodes         ProductBarcode[]
   stockBalances    StockBalance[]
-  stockMovements   StockMovement[]
+    stockMovements StockMovement[]
+  saleReturnItems SaleReturnItem[]
+  purchaseReturnItems PurchaseReturnItem[]
   serialNumbers    SerialNumber[]
   saleItems        SaleItem[]
   purchaseItems    PurchaseItem[]
@@ -526,6 +534,7 @@ model Sale {
   createdAt     DateTime      @default(now())
   updatedAt     DateTime      @updatedAt
   items         SaleItem[]
+  returns       SaleReturn[]
 
   @@unique([tenantId, invoiceNumber])
   @@index([tenantId, status])
@@ -573,6 +582,7 @@ model Purchase {
   createdAt     DateTime       @default(now())
   updatedAt     DateTime       @updatedAt
   items         PurchaseItem[]
+  returns       PurchaseReturn[]
 
   @@unique([tenantId, invoiceNumber])
   @@index([tenantId, status])
@@ -592,6 +602,74 @@ model PurchaseItem {
   total      Float
 
   @@index([purchaseId])
+  @@index([productId])
+}
+
+model SaleReturn {
+  id          String          @id @default(uuid())
+  tenantId    String
+  company     Company         @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  saleId      String
+  sale        Sale            @relation(fields: [saleId], references: [id], onDelete: Restrict)
+  warehouseId String
+  warehouse   Warehouse       @relation(fields: [warehouseId], references: [id], onDelete: Restrict)
+  userId      String?
+  user        User?           @relation(fields: [userId], references: [id], onDelete: SetNull)
+  total       Float           @default(0)
+  reason      String?
+  createdAt   DateTime        @default(now())
+  items       SaleReturnItem[]
+
+  @@index([tenantId, createdAt])
+  @@index([saleId])
+}
+
+model SaleReturnItem {
+  id          String     @id @default(uuid())
+  returnId    String
+  return      SaleReturn  @relation(fields: [returnId], references: [id], onDelete: Cascade)
+  productId   String
+  product     Product    @relation(fields: [productId], references: [id], onDelete: Restrict)
+  quantity    Float
+  unitPrice   Float
+  total       Float
+  reason      String
+
+  @@index([returnId])
+  @@index([productId])
+}
+
+model PurchaseReturn {
+  id          String              @id @default(uuid())
+  tenantId    String
+  company     Company             @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  purchaseId  String
+  purchase    Purchase            @relation(fields: [purchaseId], references: [id], onDelete: Restrict)
+  warehouseId String
+  warehouse   Warehouse           @relation(fields: [warehouseId], references: [id], onDelete: Restrict)
+  userId      String?
+  user        User?               @relation(fields: [userId], references: [id], onDelete: SetNull)
+  total       Float               @default(0)
+  reason      String?
+  createdAt   DateTime            @default(now())
+  items       PurchaseReturnItem[]
+
+  @@index([tenantId, createdAt])
+  @@index([purchaseId])
+}
+
+model PurchaseReturnItem {
+  id          String          @id @default(uuid())
+  returnId    String
+  return      PurchaseReturn @relation(fields: [returnId], references: [id], onDelete: Cascade)
+  productId   String
+  product     Product         @relation(fields: [productId], references: [id], onDelete: Restrict)
+  quantity    Float
+  unitPrice   Float
+  total       Float
+  reason      String
+
+  @@index([returnId])
   @@index([productId])
 }
 
