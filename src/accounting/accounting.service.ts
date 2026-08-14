@@ -7,7 +7,7 @@ import { CreateAccountDto, CreateCashboxDto, CreateExpenseDto, CreateJournalEntr
 export class AccountingService {
   private readonly prisma: PrismaService;
 
-  /* istanbul ignore next */
+  /* c8 ignore next */
   constructor(prisma: PrismaService) {
     this.prisma = prisma;
   }
