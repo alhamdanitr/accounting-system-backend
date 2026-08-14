@@ -10,7 +10,7 @@
 | 4 | حماية كل endpoints | كل controller محمي بـ JWT وRBAC أو موثق كمسار public | `node scripts/check-route-guards.mjs` نجح؛ public allowlist محصور في auth/health وbootstrap company/user | CLOSED |
 | 5 | عزل tenant بنسبة 100% | رفض cross-tenant في كل الوحدات الحساسة | `test/tenant-isolation.e2e-spec.ts`: 9/9 حالات ناجحة للمنتجات والمستودعات والحسابات والتقارير والعملاء والموردين والإعدادات والتدقيق والمزامنة | CLOSED |
 | 6 | عدم وجود أسرار | لا أسرار في الكود أو تاريخ Git | Gitleaks/secret scan و`git log` | OPEN |
-| 7 | فحص الثغرات في كل PR | workflow آلي للتبعيات والأسرار | Quality Gate يعمل على push وPR، ويشمل route audit؛ إضافة Gitleaks/dependency audit المتخصصة ما زالت مطلوبة | IN_PROGRESS |
+| 7 | فحص الثغرات في كل PR | workflow آلي للتبعيات والأسرار | `Backend Security Gate` مضاف على push وPR ويشغل `pnpm audit` وGitleaks؛ الإغلاق بعد نجاح أول تشغيل | IN_PROGRESS |
 | 8 | Response/Error envelope موحد | كل النجاح والأخطاء عبر شكل موحد موثق | Global interceptor/filter واختبارات API | OPEN |
 | 9 | Swagger دقيق 100% | كل endpoint وDTO موثق ومطابق للعقد | Swagger مفعّل و`docs/API_CONTRACT.md` موجود، لكن تغطية DTO/endpoint الكاملة لم تُثبت بعد | IN_PROGRESS |
 | 10 | لا `console.log` | استخدام logger منظم فقط | grep + lint rule | OPEN |
