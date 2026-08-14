@@ -7,8 +7,8 @@ export class WhatsAppService {
   constructor(private readonly prisma: PrismaService) {}
 
   async sendInvoiceMessage(dto: SendInvoiceWhatsAppDto) {
-    const sale = await this.prisma.sale.findUnique({
-      where: { id: dto.saleId },
+    const sale = await this.prisma.sale.findFirst({
+      where: { id: dto.saleId, tenantId: dto.tenantId },
       include: { customer: true, company: true, items: { include: { product: true } } },
     });
 
@@ -38,8 +38,8 @@ export class WhatsAppService {
   }
 
   async sendStatementMessage(dto: SendStatementWhatsAppDto) {
-    const customer = await this.prisma.customer.findUnique({
-      where: { id: dto.customerId },
+    const customer = await this.prisma.customer.findFirst({
+      where: { id: dto.customerId, tenantId: dto.tenantId },
       include: { company: true, transactions: true },
     });
 
