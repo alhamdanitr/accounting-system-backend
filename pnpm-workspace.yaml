@@ -4,3 +4,7 @@ allowBuilds:
   bcrypt: set this to true or false
   prisma: true
   unrs-resolver: set this to true or false
+
+overrides:
+  effect: '>=3.20.0'
+  '@nestjs/swagger>js-yaml': '>=5.2.2'
