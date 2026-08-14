@@ -1,14 +1,27 @@
-import { Body, Controller, ForbiddenException, Post, Req, UseGuards } from '@nestjs/common';
+import { ApiBearerAuth, ApiTags } from '@nestjs/swagger';
+import {
+  Body,
+  Controller,
+  ForbiddenException,
+  Post,
+  Req,
+  UseGuards,
+} from '@nestjs/common';
 import { Request } from 'express';
 import { WhatsAppService } from './whatsapp.service';
-import { SendInvoiceWhatsAppDto, SendStatementWhatsAppDto } from './dto/whatsapp.dto';
+import {
+  SendInvoiceWhatsAppDto,
+  SendStatementWhatsAppDto,
+} from './dto/whatsapp.dto';
 import { JwtAuthGuard } from '../auth/jwt-auth.guard';
 import { PermissionsGuard } from '../auth/guards/permissions.guard';
 import { Permissions } from '../auth/decorators/permissions.decorator';
 
 type AuthenticatedRequest = Request & { user: { tenantId: string } };
 
+@ApiTags('whatsapp')
 @Controller('whatsapp')
+@ApiBearerAuth('access-token')
 @UseGuards(JwtAuthGuard, PermissionsGuard)
 export class WhatsAppController {
   constructor(private readonly whatsAppService: WhatsAppService) {}

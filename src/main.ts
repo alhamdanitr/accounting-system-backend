@@ -23,7 +23,10 @@ async function bootstrap(): Promise<void> {
     .setTitle('Accounting System Backend API')
     .setDescription('العقد الرسمي لخدمات النظام المحاسبي متعدد الشركات')
     .setVersion('1.0.0')
-    .addBearerAuth({ type: 'http', scheme: 'bearer', bearerFormat: 'JWT' }, 'access-token')
+    .addBearerAuth(
+      { type: 'http', scheme: 'bearer', bearerFormat: 'JWT' },
+      'access-token',
+    )
     .build();
   const openApiDocument = SwaggerModule.createDocument(app, swaggerConfig);
   SwaggerModule.setup('docs', app, openApiDocument, {
@@ -54,7 +57,10 @@ async function bootstrap(): Promise<void> {
   app.use(standardRateLimit);
 
   const configuredCorsOrigin = configService.get<string>('CORS_ORIGIN');
-  if (configService.get<string>('NODE_ENV') === 'production' && !configuredCorsOrigin) {
+  if (
+    configService.get<string>('NODE_ENV') === 'production' &&
+    !configuredCorsOrigin
+  ) {
     throw new Error('CORS_ORIGIN must be configured in production');
   }
   const corsOrigins = (configuredCorsOrigin || 'http://localhost:3000')

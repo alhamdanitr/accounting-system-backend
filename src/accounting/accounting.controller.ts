@@ -1,3 +1,4 @@
+import { ApiBearerAuth, ApiTags } from '@nestjs/swagger';
 import {
   Body,
   Controller,
@@ -27,7 +28,9 @@ type AuthenticatedRequest = Request & {
   };
 };
 
+@ApiTags('accounting')
 @Controller('accounting')
+@ApiBearerAuth('access-token')
 @UseGuards(JwtAuthGuard, PermissionsGuard)
 export class AccountingController {
   constructor(private readonly accountingService: AccountingService) {}
@@ -114,7 +117,9 @@ export class AccountingController {
 
   private assertTenant(request: AuthenticatedRequest, tenantId: string) {
     if (!request.user || request.user.tenantId !== tenantId) {
-      throw new ForbiddenException('الشركة المطلوبة غير متطابقة مع جلسة المستخدم');
+      throw new ForbiddenException(
+        'الشركة المطلوبة غير متطابقة مع جلسة المستخدم',
+      );
     }
   }
 }

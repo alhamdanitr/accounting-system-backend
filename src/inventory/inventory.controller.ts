@@ -1,3 +1,4 @@
+import { ApiBearerAuth, ApiTags } from '@nestjs/swagger';
 import {
   Body,
   Controller,
@@ -33,7 +34,9 @@ type AuthenticatedRequest = Request & {
   };
 };
 
+@ApiTags('inventory')
 @Controller('inventory')
+@ApiBearerAuth('access-token')
 @UseGuards(JwtAuthGuard, PermissionsGuard)
 export class InventoryController {
   constructor(
@@ -70,9 +73,14 @@ export class InventoryController {
   ) {
     this.assertTenant(request, tenantId);
     if (!warehouseId) {
-      throw new ForbiddenException('يجب تحديد المستودع قبل تحميل كتالوج نقطة البيع');
+      throw new ForbiddenException(
+        'يجب تحديد المستودع قبل تحميل كتالوج نقطة البيع',
+      );
     }
-    return this.inventoryService.findProductsForWarehouse(tenantId, warehouseId);
+    return this.inventoryService.findProductsForWarehouse(
+      tenantId,
+      warehouseId,
+    );
   }
 
   @Post('movements')

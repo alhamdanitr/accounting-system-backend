@@ -1,3 +1,4 @@
+import { ApiBearerAuth, ApiTags } from '@nestjs/swagger';
 import {
   Controller,
   BadRequestException,
@@ -20,7 +21,9 @@ type AuthenticatedRequest = Request & {
   };
 };
 
+@ApiTags('reports')
 @Controller('reports')
+@ApiBearerAuth('access-token')
 @UseGuards(JwtAuthGuard, PermissionsGuard)
 @Permissions('reports.view')
 export class ReportsController {
@@ -44,7 +47,9 @@ export class ReportsController {
   ) {
     this.assertTenant(request, tenantId);
     if (!warehouseId) {
-      throw new BadRequestException('يجب تحديد المستودع لتقرير المبيعات اليومية');
+      throw new BadRequestException(
+        'يجب تحديد المستودع لتقرير المبيعات اليومية',
+      );
     }
     return this.reportsService.getDailySalesReport(tenantId, warehouseId, date);
   }
@@ -79,9 +84,14 @@ export class ReportsController {
     return this.reportsService.getFinancialSummary(tenantId);
   }
 
-  private assertTenant(request: AuthenticatedRequest | undefined, tenantId: string) {
+  private assertTenant(
+    request: AuthenticatedRequest | undefined,
+    tenantId: string,
+  ) {
     if (!request?.user || request.user.tenantId !== tenantId) {
-      throw new ForbiddenException('الشركة المطلوبة غير متطابقة مع جلسة المستخدم');
+      throw new ForbiddenException(
+        'الشركة المطلوبة غير متطابقة مع جلسة المستخدم',
+      );
     }
   }
 }

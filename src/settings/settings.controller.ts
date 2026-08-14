@@ -1,4 +1,14 @@
-import { Body, Controller, ForbiddenException, Get, Param, Post, Req, UseGuards } from '@nestjs/common';
+import { ApiBearerAuth, ApiTags } from '@nestjs/swagger';
+import {
+  Body,
+  Controller,
+  ForbiddenException,
+  Get,
+  Param,
+  Post,
+  Req,
+  UseGuards,
+} from '@nestjs/common';
 import { Request } from 'express';
 import { SettingsService } from './settings.service';
 import type { UpsertSettingDto } from './settings.service';
@@ -9,7 +19,9 @@ import { Permissions } from '../auth/decorators/permissions.decorator';
 
 type AuthenticatedRequest = Request & { user: { tenantId: string } };
 
+@ApiTags('settings')
 @Controller('settings')
+@ApiBearerAuth('access-token')
 @UseGuards(JwtAuthGuard, PermissionsGuard)
 export class SettingsController {
   constructor(private readonly settingsService: SettingsService) {}

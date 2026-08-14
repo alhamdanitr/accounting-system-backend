@@ -1,4 +1,12 @@
-import { Controller, ForbiddenException, Get, Param, Req, UseGuards } from '@nestjs/common';
+import { ApiBearerAuth, ApiTags } from '@nestjs/swagger';
+import {
+  Controller,
+  ForbiddenException,
+  Get,
+  Param,
+  Req,
+  UseGuards,
+} from '@nestjs/common';
 import { Request } from 'express';
 import { AuditService } from './audit.service';
 import { AuditLog } from '@prisma/client';
@@ -8,7 +16,9 @@ import { Permissions } from '../auth/decorators/permissions.decorator';
 
 type AuthenticatedRequest = Request & { user: { tenantId: string } };
 
+@ApiTags('audit')
 @Controller('audit')
+@ApiBearerAuth('access-token')
 @UseGuards(JwtAuthGuard, PermissionsGuard)
 export class AuditController {
   constructor(private readonly auditService: AuditService) {}

@@ -8,15 +8,15 @@
 
 ## الصلاحيات الأساسية
 
-| الوظيفة | الصلاحية |
-|---|---|
-| المنتجات | `products.view`, `products.manage` |
+| الوظيفة             | الصلاحية                             |
+| ------------------- | ------------------------------------ |
+| المنتجات            | `products.view`, `products.manage`   |
 | المخزون والمستودعات | `inventory.view`, `inventory.manage` |
-| المبيعات | `sales.view`, `sales.create` |
-| المشتريات | `purchases.view`, `purchases.create` |
-| التقارير | `reports.view` |
-| المزامنة | `sync.push`, `sync.pull` |
-| WhatsApp | `whatsapp.send` |
+| المبيعات            | `sales.view`, `sales.create`         |
+| المشتريات           | `purchases.view`, `purchases.create` |
+| التقارير            | `reports.view`                       |
+| المزامنة            | `sync.push`, `sync.pull`             |
+| WhatsApp            | `whatsapp.send`                      |
 
 ## عقد المزامنة
 
@@ -32,13 +32,13 @@ POST /api/v1/sync/push
 
 حالات نتيجة العملية هي:
 
-| الحالة | المعنى | سلوك العميل |
-|---|---|---|
-| `SYNCED` | طبقت العملية بنجاح | إزالة العملية من queue وتسجيل ACK. |
-| `DUPLICATE` | وصلت العملية سابقًا بنفس idempotency key | اعتبارها مكتملة دون إعادة التطبيق. |
-| `CONFLICT` | تعارض تجاري أو نسخة غير قابلة للدمج | نقلها إلى سجل التعارضات وعدم retry بلا نهاية. |
-| `FAILED` مع `retryable=true` | فشل مؤقت | إبقاؤها في queue مع backoff. |
-| `FAILED` مع `retryable=false` | فشل دائم | حفظ الخطأ للمراجعة وعدم إعادة الإرسال تلقائيًا. |
+| الحالة                        | المعنى                                   | سلوك العميل                                     |
+| ----------------------------- | ---------------------------------------- | ----------------------------------------------- |
+| `SYNCED`                      | طبقت العملية بنجاح                       | إزالة العملية من queue وتسجيل ACK.              |
+| `DUPLICATE`                   | وصلت العملية سابقًا بنفس idempotency key | اعتبارها مكتملة دون إعادة التطبيق.              |
+| `CONFLICT`                    | تعارض تجاري أو نسخة غير قابلة للدمج      | نقلها إلى سجل التعارضات وعدم retry بلا نهاية.   |
+| `FAILED` مع `retryable=true`  | فشل مؤقت                                 | إبقاؤها في queue مع backoff.                    |
+| `FAILED` مع `retryable=false` | فشل دائم                                 | حفظ الخطأ للمراجعة وعدم إعادة الإرسال تلقائيًا. |
 
 ### Pull
 
@@ -61,13 +61,13 @@ GET /api/v1/reports/sales/daily/:tenantId?warehouseId=<warehouseId>&date=YYYY-MM
 بعد تشغيل Backend يمكن الوصول إلى واجهة Swagger من:
 
 ```text
-/api/docs
+/docs
 ```
 
 وإلى ملف JSON من:
 
 ```text
-/api/docs/openapi.json
+/docs/openapi.json
 ```
 
 يُحدّث هذا العقد عند إضافة مسار أو تغيير payload، ويجب تشغيل اختبارات الوحدة وE2E قبل دفع أي تغيير للعملاء.

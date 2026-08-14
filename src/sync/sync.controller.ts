@@ -1,3 +1,4 @@
+import { ApiBearerAuth, ApiTags } from '@nestjs/swagger';
 import {
   Body,
   Controller,
@@ -22,7 +23,9 @@ type AuthenticatedRequest = Request & {
   };
 };
 
+@ApiTags('sync')
 @Controller('sync')
+@ApiBearerAuth('access-token')
 @UseGuards(JwtAuthGuard, PermissionsGuard)
 export class SyncController {
   constructor(private readonly syncService: SyncService) {}
@@ -47,7 +50,12 @@ export class SyncController {
     @Req() request: AuthenticatedRequest,
   ) {
     this.assertDeviceIdentity(request, tenantId, deviceId);
-    return this.syncService.pullOperations(tenantId, deviceId, cursor, limit ? Number(limit) : undefined);
+    return this.syncService.pullOperations(
+      tenantId,
+      deviceId,
+      cursor,
+      limit ? Number(limit) : undefined,
+    );
   }
 
   private assertDeviceIdentity(
@@ -59,7 +67,9 @@ export class SyncController {
       request.user.tenantId !== tenantId ||
       request.user.deviceId !== deviceId
     ) {
-      throw new ForbiddenException('هوية الجهاز أو الشركة غير متطابقة مع الجلسة');
+      throw new ForbiddenException(
+        'هوية الجهاز أو الشركة غير متطابقة مع الجلسة',
+      );
     }
   }
 }

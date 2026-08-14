@@ -1,3 +1,4 @@
+import { ApiBearerAuth, ApiTags } from '@nestjs/swagger';
 import {
   Body,
   Controller,
@@ -23,7 +24,9 @@ type AuthenticatedRequest = Request & {
   };
 };
 
+@ApiTags('purchases')
 @Controller('purchases')
+@ApiBearerAuth('access-token')
 @UseGuards(JwtAuthGuard, PermissionsGuard)
 export class PurchasesController {
   constructor(private readonly purchasesService: PurchasesService) {}
@@ -73,7 +76,9 @@ export class PurchasesController {
 
   private assertTenant(request: AuthenticatedRequest, tenantId: string) {
     if (!request.user || request.user.tenantId !== tenantId) {
-      throw new ForbiddenException('الشركة المطلوبة غير متطابقة مع جلسة المستخدم');
+      throw new ForbiddenException(
+        'الشركة المطلوبة غير متطابقة مع جلسة المستخدم',
+      );
     }
   }
 }
