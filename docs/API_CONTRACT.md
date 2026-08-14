@@ -71,3 +71,41 @@ GET /api/v1/reports/sales/daily/:tenantId?warehouseId=<warehouseId>&date=YYYY-MM
 ```
 
 يُحدّث هذا العقد عند إضافة مسار أو تغيير payload، ويجب تشغيل اختبارات الوحدة وE2E قبل دفع أي تغيير للعملاء.
+
+## envelope موحد للاستجابات
+
+كل استجابة صادرة من controller تستخدم envelope ثابتًا. لا يعتمد العميل على حقول الأعمال في المستوى الأعلى من JSON؛ يقرأ النتيجة من `data` ويستخدم `meta.requestId` للتتبع.
+
+### نجاح
+
+```json
+{
+  "success": true,
+  "data": {},
+  "meta": {
+    "requestId": "uuid",
+    "timestamp": "2026-08-14T17:00:00.000Z",
+    "path": "/api/v1/example"
+  }
+}
+```
+
+### خطأ متوقع من العميل
+
+```json
+{
+  "success": false,
+  "error": {
+    "code": "HTTP_400",
+    "message": "Validation failed",
+    "details": {}
+  },
+  "meta": {
+    "requestId": "uuid",
+    "timestamp": "2026-08-14T17:00:00.000Z",
+    "path": "/api/v1/example"
+  }
+}
+```
+
+الأخطاء الداخلية ذات الحالة `5xx` لا تكشف تفاصيل الاستثناء أو stack trace للعميل، وتستخدم الرسالة العامة `Internal server error` مع `requestId` للتشخيص الآمن. أما أخطاء `4xx` فتحافظ على رسالة التحقق الآمنة، ويكون `code` مستقرًا وقابلًا للمعالجة من العملاء.
