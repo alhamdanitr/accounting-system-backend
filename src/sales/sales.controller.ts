@@ -1,29 +1,79 @@
-import { Body, Controller, Get, Param, Post, Query } from '@nestjs/common';
+import {
+  Body,
+  Controller,
+  ForbiddenException,
+  Get,
+  Param,
+  Post,
+  Req,
+  UseGuards,
+} from '@nestjs/common';
+import { Request } from 'express';
 import { SalesService } from './sales.service';
 import { CreateCustomerDto, CreateSaleDto } from './dto/sales.dto';
 import { Customer, Sale } from '@prisma/client';
+import { JwtAuthGuard } from '../auth/jwt-auth.guard';
+import { PermissionsGuard } from '../auth/guards/permissions.guard';
+import { Permissions } from '../auth/decorators/permissions.decorator';
+
+type AuthenticatedRequest = Request & {
+  user: {
+    userId: string;
+    tenantId: string;
+  };
+};
 
 @Controller('sales')
+@UseGuards(JwtAuthGuard, PermissionsGuard)
 export class SalesController {
   constructor(private readonly salesService: SalesService) {}
 
   @Post('customers')
-  async createCustomer(@Body() dto: CreateCustomerDto): Promise<Customer> {
+  @Permissions('sales.create')
+  async createCustomer(
+    @Body() dto: CreateCustomerDto,
+    @Req() request: AuthenticatedRequest,
+  ): Promise<Customer> {
+    this.assertTenant(request, dto.tenantId);
     return this.salesService.createCustomer(dto);
   }
 
   @Get('customers/:tenantId')
-  async findCustomers(@Param('tenantId') tenantId: string): Promise<Customer[]> {
+  @Permissions('sales.view')
+  async findCustomers(
+    @Param('tenantId') tenantId: string,
+    @Req() request: AuthenticatedRequest,
+  ): Promise<Customer[]> {
+    this.assertTenant(request, tenantId);
     return this.salesService.findCustomers(tenantId);
   }
 
   @Post()
-  async createSale(@Body() dto: CreateSaleDto): Promise<Sale> {
-    return this.salesService.createSale(dto);
+  @Permissions('sales.create')
+  async createSale(
+    @Body() dto: CreateSaleDto,
+    @Req() request: AuthenticatedRequest,
+  ): Promise<Sale> {
+    this.assertTenant(request, dto.tenantId);
+    return this.salesService.createSale({
+      ...dto,
+      userId: request.user.userId,
+    });
   }
 
   @Get(':tenantId')
-  async findSales(@Param('tenantId') tenantId: string): Promise<Sale[]> {
+  @Permissions('sales.view')
+  async findSales(
+    @Param('tenantId') tenantId: string,
+    @Req() request: AuthenticatedRequest,
+  ): Promise<Sale[]> {
+    this.assertTenant(request, tenantId);
     return this.salesService.findSales(tenantId);
+  }
+
+  private assertTenant(request: AuthenticatedRequest, tenantId: string) {
+    if (!request.user || request.user.tenantId !== tenantId) {
+      throw new ForbiddenException('الشركة المطلوبة غير متطابقة مع جلسة المستخدم');
+    }
   }
 }

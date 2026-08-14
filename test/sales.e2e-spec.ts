@@ -2,11 +2,14 @@ import { Test, TestingModule } from '@nestjs/testing';
 import { INestApplication, ValidationPipe } from '@nestjs/common';
 import request from 'supertest';
 import { AppModule } from '../src/app.module';
+import { PrismaService } from '../src/prisma/prisma.service';
 import { PaymentType, StockMovementType } from '@prisma/client';
 
 describe('Sales & POS E2E', () => {
   let app: INestApplication;
+  let prisma: PrismaService;
   let tenantId: string;
+  let accessToken: string;
   let warehouseId: string;
   let productId: string;
   let customerId: string;
@@ -26,6 +29,7 @@ describe('Sales & POS E2E', () => {
       }),
     );
     await app.init();
+    prisma = app.get(PrismaService);
 
     // إنشاء شركة جديدة
     const companyRes = await request(app.getHttpServer())
@@ -36,6 +40,52 @@ describe('Sales & POS E2E', () => {
         currencyCode: 'YER',
       });
     tenantId = companyRes.body.id;
+
+    const email = `sales_${Date.now()}@example.com`;
+    const userRes = await request(app.getHttpServer())
+      .post('/api/v1/users')
+      .send({
+        tenantId,
+        email,
+        fullName: 'مستخدم المبيعات',
+        password: 'SecurePassword123',
+      })
+      .expect(201);
+
+    const permissions = await Promise.all(
+      ['sales.view', 'sales.create'].map((code) =>
+        prisma.permission.upsert({
+          where: { code },
+          update: {},
+          create: { code, name: code },
+        }),
+      ),
+    );
+    const role = await prisma.role.create({
+      data: {
+        tenantId,
+        name: `Sales Operator ${Date.now()}`,
+        permissions: {
+          create: permissions.map((permission) => ({ permissionId: permission.id })),
+        },
+      },
+    });
+    await prisma.userRole.create({
+      data: { userId: userRes.body.id, roleId: role.id },
+    });
+
+    const loginRes = await request(app.getHttpServer())
+      .post('/api/v1/auth/login')
+      .send({
+        tenantId,
+        identifier: email,
+        password: 'SecurePassword123',
+        deviceName: 'Sales Test Device',
+        devicePlatform: 'TEST',
+        deviceKeyHash: `sales-device-${Date.now()}`,
+      })
+      .expect(200);
+    accessToken = loginRes.body.accessToken;
 
     // جلب المستودع
     const whRes = await request(app.getHttpServer())
@@ -70,6 +120,7 @@ describe('Sales & POS E2E', () => {
     // إنشاء عميل
     const custRes = await request(app.getHttpServer())
       .post('/api/v1/sales/customers')
+      .set('Authorization', `Bearer ${accessToken}`)
       .send({
         tenantId,
         name: 'شركة الاتصالات المتقدمة',
@@ -86,6 +137,7 @@ describe('Sales & POS E2E', () => {
   it('should create a cash sale invoice and deduct inventory successfully', async () => {
     const saleRes = await request(app.getHttpServer())
       .post('/api/v1/sales')
+      .set('Authorization', `Bearer ${accessToken}`)
       .send({
         tenantId,
         warehouseId,
@@ -114,9 +166,16 @@ describe('Sales & POS E2E', () => {
     expect(stockRes.body.quantity).toEqual(14);
   });
 
+  it('should reject unauthenticated sales requests', async () => {
+    await request(app.getHttpServer())
+      .get(`/api/v1/sales/${tenantId}`)
+      .expect(401);
+  });
+
   it('should reject a sale that uses another tenant warehouse', async () => {
     await request(app.getHttpServer())
       .post('/api/v1/sales')
+      .set('Authorization', `Bearer ${accessToken}`)
       .send({
         tenantId: '11111111-1111-4111-8111-111111111111',
         warehouseId,
@@ -131,6 +190,6 @@ describe('Sales & POS E2E', () => {
           },
         ],
       })
-      .expect(404);
+      .expect(403);
   });
 });
