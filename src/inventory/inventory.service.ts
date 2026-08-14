@@ -31,7 +31,34 @@ export class InventoryService {
     return this.prisma.warehouse.findMany({
       where: { tenantId, active: true },
       include: { branch: true },
+      orderBy: { name: 'asc' },
     });
+  }
+
+  async findProductsForWarehouse(tenantId: string, warehouseId: string) {
+    const warehouse = await this.prisma.warehouse.findFirst({
+      where: { id: warehouseId, tenantId, active: true },
+      select: { id: true },
+    });
+    if (!warehouse) {
+      throw new NotFoundException('المستودع غير موجود ضمن الشركة المحددة');
+    }
+
+    const products = await this.prisma.product.findMany({
+      where: { tenantId, active: true },
+      include: {
+        stockBalances: {
+          where: { warehouseId },
+          select: { quantity: true },
+        },
+      },
+      orderBy: { arabicName: 'asc' },
+    });
+
+    return products.map(({ stockBalances, ...product }) => ({
+      ...product,
+      currentStock: stockBalances[0]?.quantity ?? 0,
+    }));
   }
 
   async recordStockMovement(dto: StockMovementDto): Promise<StockMovement> {

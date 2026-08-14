@@ -61,6 +61,20 @@ export class InventoryController {
     return this.inventoryService.findWarehouses(tenantId);
   }
 
+  @Get('products/:tenantId')
+  @Permissions('products.view')
+  async findProductsForWarehouse(
+    @Param('tenantId') tenantId: string,
+    @Query('warehouseId') warehouseId: string,
+    @Req() request: AuthenticatedRequest,
+  ) {
+    this.assertTenant(request, tenantId);
+    if (!warehouseId) {
+      throw new ForbiddenException('يجب تحديد المستودع قبل تحميل كتالوج نقطة البيع');
+    }
+    return this.inventoryService.findProductsForWarehouse(tenantId, warehouseId);
+  }
+
   @Post('movements')
   @Permissions('inventory.manage')
   async recordMovement(
