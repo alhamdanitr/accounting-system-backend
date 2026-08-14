@@ -140,6 +140,7 @@ export class SalesService {
     const sale = await this.prisma.$transaction(async (tx) => {
       const newSale = await tx.sale.create({
         data: {
+          ...(dto.id ? { id: dto.id } : {}),
           tenantId: dto.tenantId,
           branchId: dto.branchId,
           warehouseId: dto.warehouseId,

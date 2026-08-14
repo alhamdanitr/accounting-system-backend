@@ -41,6 +41,10 @@ export class PurchaseItemDto {
 }
 
 export class CreatePurchaseDto {
+  @IsOptional()
+  @IsUUID()
+  id?: string;
+
   @IsUUID()
   tenantId!: string;
 

@@ -5,10 +5,12 @@ import { PrismaService } from '../prisma/prisma.service';
 import { ProductsService } from '../products/products.service';
 import type { CreateProductDto } from '../products/dto/product.dto';
 import { SalesService } from '../sales/sales.service';
-import type { CreateCustomerDto } from '../sales/dto/sales.dto';
+import type { CreateCustomerDto, CreateSaleDto } from '../sales/dto/sales.dto';
+import { PurchasesService } from '../purchases/purchases.service';
+import type { CreatePurchaseDto } from '../purchases/dto/purchases.dto';
 import { SyncOperationItemDto, SyncPushDto } from './dto/sync.dto';
 
-const SUPPORTED_ENTITY_TYPES = new Set(['PRODUCT', 'CUSTOMER']);
+const SUPPORTED_ENTITY_TYPES = new Set(['PRODUCT', 'CUSTOMER', 'SALE', 'PURCHASE']);
 const CREATE_OPERATION = 'CREATE';
 
 type SyncPayload = Record<string, unknown>;
@@ -19,6 +21,7 @@ export class SyncService {
     private readonly prisma: PrismaService,
     private readonly productsService: ProductsService,
     private readonly salesService: SalesService,
+    private readonly purchasesService: PurchasesService,
   ) {}
 
   async pushOperations(dto: SyncPushDto) {
@@ -142,7 +145,19 @@ export class SyncService {
       return;
     }
 
-    const existing = await this.prisma.customer.findFirst({ where: { id: operation.entityId, tenantId } });
-    if (!existing) await this.salesService.createCustomer(normalizedPayload as unknown as CreateCustomerDto);
+    if (entityType === 'CUSTOMER') {
+      const existing = await this.prisma.customer.findFirst({ where: { id: operation.entityId, tenantId } });
+      if (!existing) await this.salesService.createCustomer(normalizedPayload as unknown as CreateCustomerDto);
+      return;
+    }
+
+    if (entityType === 'SALE') {
+      const existing = await this.prisma.sale.findFirst({ where: { id: operation.entityId, tenantId } });
+      if (!existing) await this.salesService.createSale(normalizedPayload as unknown as CreateSaleDto);
+      return;
+    }
+
+    const existing = await this.prisma.purchase.findFirst({ where: { id: operation.entityId, tenantId } });
+    if (!existing) await this.purchasesService.createPurchase(normalizedPayload as unknown as CreatePurchaseDto);
   }
 }

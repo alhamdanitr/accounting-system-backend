@@ -117,6 +117,7 @@ export class PurchasesService {
     const purchase = await this.prisma.$transaction(async (tx) => {
       const newPurchase = await tx.purchase.create({
         data: {
+          ...(dto.id ? { id: dto.id } : {}),
           tenantId: dto.tenantId,
           branchId: dto.branchId,
           warehouseId: dto.warehouseId,
