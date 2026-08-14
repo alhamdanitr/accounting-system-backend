@@ -60,6 +60,9 @@ jobs:
       - name: Validate Prisma schema
         run: pnpm exec prisma validate
 
+      - name: Audit route guards
+        run: pnpm run check:routes
+
       - name: Apply database migrations
         run: pnpm exec prisma migrate deploy
 
