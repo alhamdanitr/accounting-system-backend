@@ -12,19 +12,41 @@ async function bootstrap(): Promise<void> {
   // تفعيل حماية Helmet للإنتاج
   app.use(helmet());
 
-  // تحديد معدل الطلبات (Rate Limiting)
-  app.use(
-    rateLimit({
-      windowMs: 15 * 60 * 1000,
-      max: 1000,
-      standardHeaders: true,
-      legacyHeaders: false,
-    }),
-  );
-
   app.setGlobalPrefix('api/v1');
+
+  const standardRateLimit = rateLimit({
+    windowMs: 15 * 60 * 1000,
+    max: 300,
+    standardHeaders: true,
+    legacyHeaders: false,
+  });
+  const loginRateLimit = rateLimit({
+    windowMs: 15 * 60 * 1000,
+    max: 10,
+    skipSuccessfulRequests: true,
+    standardHeaders: true,
+    legacyHeaders: false,
+  });
+  const refreshRateLimit = rateLimit({
+    windowMs: 15 * 60 * 1000,
+    max: 60,
+    standardHeaders: true,
+    legacyHeaders: false,
+  });
+  app.use('/api/v1/auth/login', loginRateLimit);
+  app.use('/api/v1/auth/refresh', refreshRateLimit);
+  app.use(standardRateLimit);
+
+  const configuredCorsOrigin = configService.get<string>('CORS_ORIGIN');
+  if (configService.get<string>('NODE_ENV') === 'production' && !configuredCorsOrigin) {
+    throw new Error('CORS_ORIGIN must be configured in production');
+  }
+  const corsOrigins = (configuredCorsOrigin || 'http://localhost:3000')
+    .split(',')
+    .map((origin) => origin.trim())
+    .filter(Boolean);
   app.enableCors({
-    origin: configService.get<string>('CORS_ORIGIN', '*'),
+    origin: corsOrigins,
     credentials: true,
   });
   app.useGlobalPipes(
