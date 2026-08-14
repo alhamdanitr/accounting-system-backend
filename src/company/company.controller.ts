@@ -10,7 +10,6 @@ import { Permissions } from '../auth/decorators/permissions.decorator';
 type AuthenticatedRequest = Request & { user: { tenantId: string } };
 
 @Controller('companies')
-@UseGuards(JwtAuthGuard, PermissionsGuard)
 export class CompanyController {
   constructor(private readonly companyService: CompanyService) {}
 
@@ -20,12 +19,14 @@ export class CompanyController {
   }
 
   @Get()
+  @UseGuards(JwtAuthGuard, PermissionsGuard)
   @Permissions('companies.view')
   async findAllCompanies(): Promise<Company[]> {
     return this.companyService.findAllCompanies();
   }
 
   @Get(':id')
+  @UseGuards(JwtAuthGuard, PermissionsGuard)
   @Permissions('companies.view')
   async findCompanyById(
     @Param('id') id: string,
@@ -36,6 +37,7 @@ export class CompanyController {
   }
 
   @Post(':tenantId/branches')
+  @UseGuards(JwtAuthGuard, PermissionsGuard)
   @Permissions('branches.manage')
   async createBranch(
     @Param('tenantId') tenantId: string,
@@ -47,6 +49,7 @@ export class CompanyController {
   }
 
   @Get(':tenantId/branches')
+  @UseGuards(JwtAuthGuard, PermissionsGuard)
   @Permissions('branches.view')
   async findBranchesByTenant(
     @Param('tenantId') tenantId: string,
