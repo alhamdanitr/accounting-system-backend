@@ -15,14 +15,16 @@ describe('SyncService', () => {
     },
     product: { findFirst: jest.fn() },
     customer: { findFirst: jest.fn() },
+    purchase: { findFirst: jest.fn() },
   } as any;
   const productsService = { createProduct: jest.fn() } as any;
-  const salesService = { createCustomer: jest.fn() } as any;
+  const salesService = { createCustomer: jest.fn(), createSale: jest.fn() } as any;
+  const purchasesService = { createPurchase: jest.fn() } as any;
   let service: SyncService;
 
   beforeEach(() => {
     jest.clearAllMocks();
-    service = new SyncService(prisma, productsService, salesService);
+    service = new SyncService(prisma, productsService, salesService, purchasesService);
     prisma.device.findFirst.mockResolvedValue({ id: 'device-1' });
     prisma.device.update.mockResolvedValue(undefined);
   });
@@ -52,6 +54,34 @@ describe('SyncService', () => {
       id: '11111111-1111-4111-8111-111111111111',
       tenantId: 'tenant-1',
       name: 'عميل اختباري',
+    }));
+  });
+
+  it('applies a purchase create operation through the central purchases service', async () => {
+    prisma.syncOperation.findUnique.mockResolvedValue(null);
+    prisma.syncOperation.create.mockResolvedValue({ id: 'op-purchase', sequence: 9n });
+    prisma.syncOperation.update
+      .mockResolvedValueOnce({ id: 'op-purchase' })
+      .mockResolvedValueOnce({ id: 'op-purchase', sequence: 9n, status: SyncOperationStatus.SYNCED });
+    prisma.purchase.findFirst.mockResolvedValue(null);
+
+    const result = await service.pushOperations({
+      tenantId: 'tenant-1',
+      deviceId: 'device-1',
+      operations: [{
+        idempotencyKey: 'operation-purchase-1',
+        entityType: 'PURCHASE',
+        entityId: '11111111-1111-4111-8111-111111111114',
+        operationType: 'CREATE',
+        payload: JSON.stringify({ warehouseId: 'warehouse-1', items: [] }),
+      }],
+    });
+
+    expect(result.success).toBe(true);
+    expect(purchasesService.createPurchase).toHaveBeenCalledWith(expect.objectContaining({
+      id: '11111111-1111-4111-8111-111111111114',
+      tenantId: 'tenant-1',
+      warehouseId: 'warehouse-1',
     }));
   });
 
