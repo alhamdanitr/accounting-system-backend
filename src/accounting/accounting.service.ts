@@ -20,6 +20,11 @@ export class AccountingService {
       throw new BadRequestException('رقم الحساب موجود مسبقاً في الدليل المحاسبي');
     }
 
+    if (dto.parentId) {
+      const parent = await this.prisma.account.findFirst({ where: { id: dto.parentId, tenantId: dto.tenantId } });
+      if (!parent) throw new NotFoundException('الحساب الأب غير موجود ضمن الشركة المحددة');
+    }
+
     return this.prisma.account.create({
       data: {
         tenantId: dto.tenantId,
@@ -39,11 +44,26 @@ export class AccountingService {
   }
 
   async createJournalEntry(dto: CreateJournalEntryDto): Promise<JournalEntry> {
-    // التحقق من توازن القيد (إجمالي المدين = إجمالي الدائن)
+    if (dto.lines.length < 2) {
+      throw new BadRequestException('القيد المحاسبي يجب أن يحتوي على سطرين على الأقل');
+    }
+
+    const accountIds = [...new Set(dto.lines.map((line) => line.accountId))];
+    const accounts = await this.prisma.account.findMany({
+      where: { id: { in: accountIds }, tenantId: dto.tenantId },
+      select: { id: true },
+    });
+    if (accounts.length !== accountIds.length) {
+      throw new NotFoundException('يوجد حساب غير موجود ضمن الشركة المحددة');
+    }
+
     let totalDebit = 0;
     let totalCredit = 0;
 
     for (const line of dto.lines) {
+      if (line.debit < 0 || line.credit < 0 || (line.debit > 0 && line.credit > 0) || (line.debit === 0 && line.credit === 0)) {
+        throw new BadRequestException('كل سطر محاسبي يجب أن يحتوي على مدين أو دائن موجب، وليس كليهما');
+      }
       totalDebit += line.debit;
       totalCredit += line.credit;
     }
@@ -90,6 +110,9 @@ export class AccountingService {
   }
 
   async createCashbox(dto: CreateCashboxDto): Promise<Cashbox> {
+    const existing = await this.prisma.cashbox.findUnique({ where: { tenantId_code: { tenantId: dto.tenantId, code: dto.code } } });
+    if (existing) throw new BadRequestException('رمز الصندوق موجود مسبقاً في الشركة');
+
     return this.prisma.cashbox.create({
       data: {
         tenantId: dto.tenantId,
@@ -106,6 +129,12 @@ export class AccountingService {
   }
 
   async createExpense(dto: CreateExpenseDto): Promise<Expense> {
+    if (dto.amount <= 0) throw new BadRequestException('قيمة المصروف يجب أن تكون أكبر من صفر');
+    if (dto.userId) {
+      const user = await this.prisma.user.findFirst({ where: { id: dto.userId, tenantId: dto.tenantId, status: 'ACTIVE' } });
+      if (!user) throw new NotFoundException('المستخدم غير موجود أو غير نشط ضمن الشركة المحددة');
+    }
+
     return this.prisma.expense.create({
       data: {
         tenantId: dto.tenantId,
