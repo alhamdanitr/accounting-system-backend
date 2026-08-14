@@ -7,10 +7,10 @@
 | 1 | تنظيف الملفات الغريبة وbuild artifacts | لا توجد artifacts أو ملفات غير مقصودة في الجذر أو التتبع | حذف الملف الغريب و`dist/tsconfig.build.tsbuildinfo`، والتحقق عبر Git | CLOSED |
 | 2 | `.gitignore` شامل ومختبر | يستثني build/dist/node_modules/logs/env/coverage دون إخفاء ملفات المصدر | مراجعة `.gitignore` وفحص المسارات المحلية | CLOSED |
 | 3 | حماية فرع `main` | Pull Request ومراجعة وCI إلزامية | GitHub Branch Protection: مراجعة واحدة، `quality` إلزامي، conversation resolution، ومنع force-push/delete | CLOSED |
-| 4 | حماية كل endpoints | كل controller محمي بـ JWT وRBAC أو موثق كمسار public | فحص controllers واختبارات auth | OPEN |
+| 4 | حماية كل endpoints | كل controller محمي بـ JWT وRBAC أو موثق كمسار public | `node scripts/check-route-guards.mjs` نجح؛ public allowlist محصور في auth/health وbootstrap company/user | CLOSED |
 | 5 | عزل tenant بنسبة 100% | رفض cross-tenant في كل الوحدات الحساسة | E2E cross-tenant matrix | OPEN |
 | 6 | عدم وجود أسرار | لا أسرار في الكود أو تاريخ Git | Gitleaks/secret scan و`git log` | OPEN |
-| 7 | فحص الثغرات في كل PR | workflow آلي للتبعيات والأسرار | Quality Gate يعمل على push وPR ونجح run `31822596109`; فحص dependency/secret المتخصص ما زال ضمن بند 6 | IN_PROGRESS |
+| 7 | فحص الثغرات في كل PR | workflow آلي للتبعيات والأسرار | Quality Gate يعمل على push وPR، ويشمل route audit؛ إضافة Gitleaks/dependency audit المتخصصة ما زالت مطلوبة | IN_PROGRESS |
 | 8 | Response/Error envelope موحد | كل النجاح والأخطاء عبر شكل موحد موثق | Global interceptor/filter واختبارات API | OPEN |
 | 9 | Swagger دقيق 100% | كل endpoint وDTO موثق ومطابق للعقد | Swagger مفعّل و`docs/API_CONTRACT.md` موجود، لكن تغطية DTO/endpoint الكاملة لم تُثبت بعد | IN_PROGRESS |
 | 10 | لا `console.log` | استخدام logger منظم فقط | grep + lint rule | OPEN |
