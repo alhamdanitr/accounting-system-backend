@@ -87,3 +87,21 @@ jobs:
 
       - name: Build
         run: pnpm exec nest build
+
+      - name: Run load test
+        run: |
+          node dist/src/main.js > /tmp/backend-load-server.log 2>&1 &
+          server_pid=$!
+          trap 'kill "$server_pid" 2>/dev/null || true' EXIT
+          for attempt in $(seq 1 30); do
+            if curl -fsS http://127.0.0.1:3000/api/v1/health >/dev/null; then break; fi
+            sleep 1
+          done
+          LOAD_TEST_REQUESTS=200 LOAD_TEST_CONCURRENCY=20 LOAD_TEST_P95_LIMIT_MS=500 pnpm run load-test
+
+      - name: Upload load test report
+        uses: actions/upload-artifact@v4
+        with:
+          name: backend-load-test
+          path: artifacts/load-test
+          if-no-files-found: error

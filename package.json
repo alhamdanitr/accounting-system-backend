@@ -26,7 +26,8 @@
     "check:routes": "node scripts/check-route-guards.mjs",
     "check:console": "node scripts/check-console-usage.mjs",
     "check:accounting-coverage": "pnpm test:cov --runInBand && node scripts/check-accounting-coverage.mjs",
-    "check:coverage": "node scripts/check-global-coverage.mjs"
+    "check:coverage": "node scripts/check-global-coverage.mjs",
+    "load-test": "node scripts/load-test.mjs"
   },
   "dependencies": {
     "@nestjs/common": "^11.0.1",
