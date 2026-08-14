@@ -23,7 +23,8 @@
     "test:e2e": "jest --config ./test/jest-e2e.json",
     "test:e2e:local": "bash scripts/run-e2e.sh",
     "check:routes": "node scripts/check-route-guards.mjs",
-    "check:console": "node scripts/check-console-usage.mjs"
+    "check:console": "node scripts/check-console-usage.mjs",
+    "check:accounting-coverage": "pnpm test:cov --runInBand && node scripts/check-accounting-coverage.mjs"
   },
   "dependencies": {
     "@nestjs/common": "^11.0.1",
@@ -90,6 +91,7 @@
       "**/*.(t|j)s"
     ],
     "coverageDirectory": "../coverage",
-    "testEnvironment": "node"
+    "testEnvironment": "node",
+    "coverageProvider": "v8"
   }
 }
