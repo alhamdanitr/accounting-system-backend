@@ -1,4 +1,4 @@
-import { IsEmail, IsOptional, IsString, IsUUID, Length } from 'class-validator';
+import { IsArray, IsEmail, IsOptional, IsString, IsUUID, Length } from 'class-validator';
 
 export class CreateUserDto {
   @IsUUID()
@@ -36,4 +36,9 @@ export class CreateRoleDto {
   @IsOptional()
   @IsString()
   description?: string;
+
+  @IsOptional()
+  @IsArray()
+  @IsString({ each: true })
+  permissionCodes?: string[];
 }

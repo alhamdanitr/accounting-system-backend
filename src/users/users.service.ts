@@ -16,6 +16,15 @@ export class UsersService {
       throw new NotFoundException('الشركة غير موجودة');
     }
 
+    if (dto.branchId) {
+      const branch = await this.prisma.branch.findFirst({
+        where: { id: dto.branchId, tenantId: dto.tenantId, active: true },
+      });
+      if (!branch) {
+        throw new NotFoundException('الفرع غير موجود أو لا يتبع الشركة المحددة');
+      }
+    }
+
     if (dto.email) {
       const existing = await this.prisma.user.findFirst({
         where: { tenantId: dto.tenantId, email: dto.email },
@@ -61,11 +70,24 @@ export class UsersService {
   }
 
   async createRole(dto: CreateRoleDto): Promise<Role> {
+    const company = await this.prisma.company.findUnique({ where: { id: dto.tenantId } });
+    if (!company) throw new NotFoundException('الشركة غير موجودة');
+
     const existing = await this.prisma.role.findFirst({
-      where: { tenantId: dto.tenantId, name: الدور(dto.name) },
+      where: { tenantId: dto.tenantId, name: dto.name },
     });
     if (existing) {
       throw new BadRequestException('الدور موجود مسبقاً في هذه الشركة');
+    }
+
+    const permissionCodes = [...new Set(dto.permissionCodes ?? [])];
+    const permissions = permissionCodes.length
+      ? await this.prisma.permission.findMany({ where: { code: { in: permissionCodes } } })
+      : [];
+    if (permissions.length !== permissionCodes.length) {
+      const found = new Set(permissions.map((permission) => permission.code));
+      const missing = permissionCodes.filter((code) => !found.has(code));
+      throw new BadRequestException(`صلاحيات غير معروفة: ${missing.join(', ')}`);
     }
 
     return this.prisma.role.create({
@@ -73,11 +95,12 @@ export class UsersService {
         tenantId: dto.tenantId,
         name: dto.name,
         description: dto.description,
+        permissions: {
+          create: permissions.map((permission) => ({ permissionId: permission.id })),
+        },
       },
+      include: { permissions: { include: { permission: true } } },
     });
   }
 }
 
-function الدور(name: string): string {
-  return name;
-}
