@@ -69,8 +69,8 @@ jobs:
       - name: Apply database migrations
         run: pnpm exec prisma migrate deploy
 
-      - name: Unit tests
-        run: pnpm exec jest --runInBand
+      - name: Unit tests and accounting coverage policy
+        run: pnpm run check:accounting-coverage
 
       - name: E2E tests
         run: pnpm exec jest --config ./test/jest-e2e.json --runInBand

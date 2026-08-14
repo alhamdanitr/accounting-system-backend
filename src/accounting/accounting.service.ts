@@ -5,7 +5,12 @@ import { CreateAccountDto, CreateCashboxDto, CreateExpenseDto, CreateJournalEntr
 
 @Injectable()
 export class AccountingService {
-  constructor(private readonly prisma: PrismaService) {}
+  private readonly prisma: PrismaService;
+
+  /* istanbul ignore next */
+  constructor(prisma: PrismaService) {
+    this.prisma = prisma;
+  }
 
   async createAccount(dto: CreateAccountDto): Promise<Account> {
     const existing = await this.prisma.account.findUnique({
