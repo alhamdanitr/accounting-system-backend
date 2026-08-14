@@ -10,6 +10,8 @@ async function main() {
     { code: 'inventory.view', name: 'عرض المخزون' },
     { code: 'inventory.manage', name: 'إدارة المخزون' },
     { code: 'reports.view', name: 'عرض التقارير' },
+    { code: 'accounting.view', name: 'عرض المحاسبة' },
+    { code: 'accounting.manage', name: 'إدارة المحاسبة' },
     { code: 'users.manage', name: 'إدارة المستخدمين' },
   ];
 
