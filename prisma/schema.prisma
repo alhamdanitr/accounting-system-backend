@@ -106,37 +106,37 @@ enum JournalStatus {
 }
 
 model Company {
-  id           String          @id @default(uuid())
-  name         String
-  legalName    String?
-  code         String          @unique
-  currencyCode String          @default("YER")
-  active       Boolean         @default(true)
-  createdAt    DateTime        @default(now())
-  updatedAt    DateTime        @updatedAt
-  branches     Branch[]
-  users        User[]
-  roles        Role[]
-  devices      Device[]
-  warehouses   Warehouse[]
-  categories   Category[]
-  brands       Brand[]
-  units        Unit[]
-  products     Product[]
-  customers    Customer[]
-  suppliers    Supplier[]
-  sales        Sale[]
-  purchases    Purchase[]
-  saleReturns  SaleReturn[]
+  id              String           @id @default(uuid())
+  name            String
+  legalName       String?
+  code            String           @unique
+  currencyCode    String           @default("YER")
+  active          Boolean          @default(true)
+  createdAt       DateTime         @default(now())
+  updatedAt       DateTime         @updatedAt
+  branches        Branch[]
+  users           User[]
+  roles           Role[]
+  devices         Device[]
+  warehouses      Warehouse[]
+  categories      Category[]
+  brands          Brand[]
+  units           Unit[]
+  products        Product[]
+  customers       Customer[]
+  suppliers       Supplier[]
+  sales           Sale[]
+  purchases       Purchase[]
+  saleReturns     SaleReturn[]
   purchaseReturns PurchaseReturn[]
-  accounts     Account[]
-  journals     JournalEntry[]
-  cashboxes    Cashbox[]
-  expenses     Expense[]
-  operations   SyncOperation[]
-  conflicts    SyncConflict[]
-  auditLogs    AuditLog[]
-  settings     Setting[]
+  accounts        Account[]
+  journals        JournalEntry[]
+  cashboxes       Cashbox[]
+  expenses        Expense[]
+  operations      SyncOperation[]
+  conflicts       SyncConflict[]
+  auditLogs       AuditLog[]
+  settings        Setting[]
 
   @@index([active])
 }
@@ -163,27 +163,27 @@ model Branch {
 }
 
 model User {
-  id             String          @id @default(uuid())
-  tenantId       String
-  company        Company         @relation(fields: [tenantId], references: [id], onDelete: Cascade)
-  branchId       String?
-  branch         Branch?         @relation(fields: [branchId], references: [id], onDelete: SetNull)
-  email          String?
-  phone          String?
-  fullName       String
-  passwordHash   String
-  status         UserStatus      @default(INVITED)
-  lastLoginAt    DateTime?
-  createdAt      DateTime        @default(now())
-  updatedAt      DateTime        @updatedAt
-  roles          UserRole[]
-  devices        Device[]
-  refreshTokens  RefreshToken[]
-  auditLogs      AuditLog[]
-  stockMovements StockMovement[] @relation("MovementCreator")
-  sales          Sale[]          @relation("SellerUser")
-  purchases      Purchase[]      @relation("BuyerUser")
-  journals       JournalEntry[]  @relation("JournalCreator")
+  id              String           @id @default(uuid())
+  tenantId        String
+  company         Company          @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  branchId        String?
+  branch          Branch?          @relation(fields: [branchId], references: [id], onDelete: SetNull)
+  email           String?
+  phone           String?
+  fullName        String
+  passwordHash    String
+  status          UserStatus       @default(INVITED)
+  lastLoginAt     DateTime?
+  createdAt       DateTime         @default(now())
+  updatedAt       DateTime         @updatedAt
+  roles           UserRole[]
+  devices         Device[]
+  refreshTokens   RefreshToken[]
+  auditLogs       AuditLog[]
+  stockMovements  StockMovement[]  @relation("MovementCreator")
+  sales           Sale[]           @relation("SellerUser")
+  purchases       Purchase[]       @relation("BuyerUser")
+  journals        JournalEntry[]   @relation("JournalCreator")
   expenses        Expense[]
   saleReturns     SaleReturn[]
   purchaseReturns PurchaseReturn[]
@@ -240,20 +240,20 @@ model RolePermission {
 }
 
 model Device {
-  id            String           @id @default(uuid())
+  id            String          @id @default(uuid())
   tenantId      String
-  company       Company          @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  company       Company         @relation(fields: [tenantId], references: [id], onDelete: Cascade)
   branchId      String?
-  branch        Branch?          @relation(fields: [branchId], references: [id], onDelete: SetNull)
+  branch        Branch?         @relation(fields: [branchId], references: [id], onDelete: SetNull)
   userId        String?
-  user          User?            @relation(fields: [userId], references: [id], onDelete: SetNull)
+  user          User?           @relation(fields: [userId], references: [id], onDelete: SetNull)
   name          String
   platform      String
   deviceKeyHash String
-  status        DeviceStatus     @default(ACTIVE)
+  status        DeviceStatus    @default(ACTIVE)
   lastSeenAt    DateTime?
-  createdAt     DateTime         @default(now())
-  updatedAt     DateTime         @updatedAt
+  createdAt     DateTime        @default(now())
+  updatedAt     DateTime        @updatedAt
   operations    SyncOperation[]
   cursors       SyncCursor[]
   auditLogs     AuditLog[]
@@ -265,36 +265,36 @@ model Device {
 }
 
 model RefreshToken {
-  id         String    @id @default(uuid())
-  userId     String
-  user       User      @relation(fields: [userId], references: [id], onDelete: Cascade)
-  deviceId   String?
-  device     Device?   @relation(fields: [deviceId], references: [id], onDelete: SetNull)
-  tokenHash  String    @unique
-  expiresAt  DateTime
-  createdAt  DateTime  @default(now())
-  revokedAt  DateTime?
+  id        String    @id @default(uuid())
+  userId    String
+  user      User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  deviceId  String?
+  device    Device?   @relation(fields: [deviceId], references: [id], onDelete: SetNull)
+  tokenHash String    @unique
+  expiresAt DateTime
+  createdAt DateTime  @default(now())
+  revokedAt DateTime?
 
   @@index([userId, revokedAt])
   @@index([expiresAt])
 }
 
 model Warehouse {
-  id             String          @id @default(uuid())
-  tenantId       String
-  company        Company         @relation(fields: [tenantId], references: [id], onDelete: Cascade)
-  branchId       String?
-  branch         Branch?         @relation(fields: [branchId], references: [id], onDelete: SetNull)
-  name           String
-  code           String
-  active         Boolean         @default(true)
-  createdAt      DateTime        @default(now())
-  updatedAt      DateTime        @updatedAt
-  stockBalances  StockBalance[]
-  stockMovements StockMovement[]
-  sales          Sale[]
-  purchases      Purchase[]
-  saleReturns    SaleReturn[]
+  id              String           @id @default(uuid())
+  tenantId        String
+  company         Company          @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  branchId        String?
+  branch          Branch?          @relation(fields: [branchId], references: [id], onDelete: SetNull)
+  name            String
+  code            String
+  active          Boolean          @default(true)
+  createdAt       DateTime         @default(now())
+  updatedAt       DateTime         @updatedAt
+  stockBalances   StockBalance[]
+  stockMovements  StockMovement[]
+  sales           Sale[]
+  purchases       Purchase[]
+  saleReturns     SaleReturn[]
   purchaseReturns PurchaseReturn[]
 
   @@unique([tenantId, code])
@@ -343,41 +343,41 @@ model Unit {
 }
 
 model Product {
-  id               String           @id @default(uuid())
-  tenantId         String
-  company          Company          @relation(fields: [tenantId], references: [id], onDelete: Cascade)
-  sku              String
-  barcode          String?
-  arabicName       String
-  englishName      String?
-  categoryId       String?
-  category         Category?        @relation(fields: [categoryId], references: [id], onDelete: SetNull)
-  brandId          String?
-  brand            Brand?           @relation(fields: [brandId], references: [id], onDelete: SetNull)
-  unitId           String?
-  unit             Unit?            @relation(fields: [unitId], references: [id], onDelete: SetNull)
-  purchasePrice    Float            @default(0)
-  salePrice        Float            @default(0)
-  wholesalePrice   Float            @default(0)
-  minimumPrice     Float            @default(0)
-  taxRate          Float            @default(0)
-  minimumStock     Float            @default(0)
-  maximumStock     Float            @default(0)
-  serialTracking   Boolean          @default(false)
-  expiryTracking   Boolean          @default(false)
-  active           Boolean          @default(true)
-  imageUrl         String?
-  description      String?
-  createdAt        DateTime         @default(now())
-  updatedAt        DateTime         @updatedAt
-  barcodes         ProductBarcode[]
-  stockBalances    StockBalance[]
-    stockMovements StockMovement[]
-  saleReturnItems SaleReturnItem[]
+  id                  String               @id @default(uuid())
+  tenantId            String
+  company             Company              @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  sku                 String
+  barcode             String?
+  arabicName          String
+  englishName         String?
+  categoryId          String?
+  category            Category?            @relation(fields: [categoryId], references: [id], onDelete: SetNull)
+  brandId             String?
+  brand               Brand?               @relation(fields: [brandId], references: [id], onDelete: SetNull)
+  unitId              String?
+  unit                Unit?                @relation(fields: [unitId], references: [id], onDelete: SetNull)
+  purchasePrice       Float                @default(0)
+  salePrice           Float                @default(0)
+  wholesalePrice      Float                @default(0)
+  minimumPrice        Float                @default(0)
+  taxRate             Float                @default(0)
+  minimumStock        Float                @default(0)
+  maximumStock        Float                @default(0)
+  serialTracking      Boolean              @default(false)
+  expiryTracking      Boolean              @default(false)
+  active              Boolean              @default(true)
+  imageUrl            String?
+  description         String?
+  createdAt           DateTime             @default(now())
+  updatedAt           DateTime             @updatedAt
+  barcodes            ProductBarcode[]
+  stockBalances       StockBalance[]
+  stockMovements      StockMovement[]
+  saleReturnItems     SaleReturnItem[]
   purchaseReturnItems PurchaseReturnItem[]
-  serialNumbers    SerialNumber[]
-  saleItems        SaleItem[]
-  purchaseItems    PurchaseItem[]
+  serialNumbers       SerialNumber[]
+  saleItems           SaleItem[]
+  purchaseItems       PurchaseItem[]
 
   @@unique([tenantId, sku])
   @@index([tenantId, barcode])
@@ -447,17 +447,17 @@ model SerialNumber {
 }
 
 model Customer {
-  id           String               @id @default(uuid())
+  id           String                @id @default(uuid())
   tenantId     String
-  company      Company              @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  company      Company               @relation(fields: [tenantId], references: [id], onDelete: Cascade)
   name         String
   phone        String?
   email        String?
   address      String?
-  creditLimit  Float                @default(0)
-  balance      Float                @default(0)
-  createdAt    DateTime             @default(now())
-  updatedAt    DateTime             @updatedAt
+  creditLimit  Float                 @default(0)
+  balance      Float                 @default(0)
+  createdAt    DateTime              @default(now())
+  updatedAt    DateTime              @updatedAt
   sales        Sale[]
   transactions CustomerTransaction[]
 
@@ -510,29 +510,29 @@ model SupplierTransaction {
 }
 
 model Sale {
-  id            String        @id @default(uuid())
+  id            String       @id @default(uuid())
   tenantId      String
-  company       Company       @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  company       Company      @relation(fields: [tenantId], references: [id], onDelete: Cascade)
   branchId      String?
-  branch        Branch?       @relation(fields: [branchId], references: [id], onDelete: SetNull)
+  branch        Branch?      @relation(fields: [branchId], references: [id], onDelete: SetNull)
   warehouseId   String
-  warehouse     Warehouse     @relation(fields: [warehouseId], references: [id], onDelete: Restrict)
+  warehouse     Warehouse    @relation(fields: [warehouseId], references: [id], onDelete: Restrict)
   customerId    String?
-  customer      Customer?     @relation(fields: [customerId], references: [id], onDelete: SetNull)
+  customer      Customer?    @relation(fields: [customerId], references: [id], onDelete: SetNull)
   userId        String?
-  seller        User?         @relation("SellerUser", fields: [userId], references: [id], onDelete: SetNull)
+  seller        User?        @relation("SellerUser", fields: [userId], references: [id], onDelete: SetNull)
   invoiceNumber String
-  status        SaleStatus    @default(CONFIRMED)
+  status        SaleStatus   @default(CONFIRMED)
   subTotal      Float
-  discount      Float         @default(0)
-  taxTotal      Float         @default(0)
+  discount      Float        @default(0)
+  taxTotal      Float        @default(0)
   grandTotal    Float
-  paidAmount    Float         @default(0)
-  dueAmount     Float         @default(0)
-  paymentType   PaymentType   @default(CASH)
+  paidAmount    Float        @default(0)
+  dueAmount     Float        @default(0)
+  paymentType   PaymentType  @default(CASH)
   notes         String?
-  createdAt     DateTime      @default(now())
-  updatedAt     DateTime      @updatedAt
+  createdAt     DateTime     @default(now())
+  updatedAt     DateTime     @updatedAt
   items         SaleItem[]
   returns       SaleReturn[]
 
@@ -542,45 +542,45 @@ model Sale {
 }
 
 model SaleItem {
-  id         String   @id @default(uuid())
-  saleId     String
-  sale       Sale     @relation(fields: [saleId], references: [id], onDelete: Cascade)
-  productId  String
-  product    Product  @relation(fields: [productId], references: [id], onDelete: Restrict)
-  quantity   Float
-  unitPrice  Float
-  discount   Float    @default(0)
-  taxRate    Float    @default(0)
-  total      Float
+  id        String  @id @default(uuid())
+  saleId    String
+  sale      Sale    @relation(fields: [saleId], references: [id], onDelete: Cascade)
+  productId String
+  product   Product @relation(fields: [productId], references: [id], onDelete: Restrict)
+  quantity  Float
+  unitPrice Float
+  discount  Float   @default(0)
+  taxRate   Float   @default(0)
+  total     Float
 
   @@index([saleId])
   @@index([productId])
 }
 
 model Purchase {
-  id            String         @id @default(uuid())
+  id            String           @id @default(uuid())
   tenantId      String
-  company       Company        @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  company       Company          @relation(fields: [tenantId], references: [id], onDelete: Cascade)
   branchId      String?
-  branch        Branch?        @relation(fields: [branchId], references: [id], onDelete: SetNull)
+  branch        Branch?          @relation(fields: [branchId], references: [id], onDelete: SetNull)
   warehouseId   String
-  warehouse     Warehouse      @relation(fields: [warehouseId], references: [id], onDelete: Restrict)
+  warehouse     Warehouse        @relation(fields: [warehouseId], references: [id], onDelete: Restrict)
   supplierId    String?
-  supplier      Supplier?      @relation(fields: [supplierId], references: [id], onDelete: SetNull)
+  supplier      Supplier?        @relation(fields: [supplierId], references: [id], onDelete: SetNull)
   userId        String?
-  buyer         User?          @relation("BuyerUser", fields: [userId], references: [id], onDelete: SetNull)
+  buyer         User?            @relation("BuyerUser", fields: [userId], references: [id], onDelete: SetNull)
   invoiceNumber String
-  status        PurchaseStatus @default(CONFIRMED)
+  status        PurchaseStatus   @default(CONFIRMED)
   subTotal      Float
-  discount      Float          @default(0)
-  taxTotal      Float          @default(0)
+  discount      Float            @default(0)
+  taxTotal      Float            @default(0)
   grandTotal    Float
-  paidAmount    Float          @default(0)
-  dueAmount     Float          @default(0)
-  paymentType   PaymentType    @default(CASH)
+  paidAmount    Float            @default(0)
+  dueAmount     Float            @default(0)
+  paymentType   PaymentType      @default(CASH)
   notes         String?
-  createdAt     DateTime       @default(now())
-  updatedAt     DateTime       @updatedAt
+  createdAt     DateTime         @default(now())
+  updatedAt     DateTime         @updatedAt
   items         PurchaseItem[]
   returns       PurchaseReturn[]
 
@@ -606,18 +606,18 @@ model PurchaseItem {
 }
 
 model SaleReturn {
-  id          String          @id @default(uuid())
+  id          String           @id @default(uuid())
   tenantId    String
-  company     Company         @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  company     Company          @relation(fields: [tenantId], references: [id], onDelete: Cascade)
   saleId      String
-  sale        Sale            @relation(fields: [saleId], references: [id], onDelete: Restrict)
+  sale        Sale             @relation(fields: [saleId], references: [id], onDelete: Restrict)
   warehouseId String
-  warehouse   Warehouse       @relation(fields: [warehouseId], references: [id], onDelete: Restrict)
+  warehouse   Warehouse        @relation(fields: [warehouseId], references: [id], onDelete: Restrict)
   userId      String?
-  user        User?           @relation(fields: [userId], references: [id], onDelete: SetNull)
-  total       Float           @default(0)
+  user        User?            @relation(fields: [userId], references: [id], onDelete: SetNull)
+  total       Float            @default(0)
   reason      String?
-  createdAt   DateTime        @default(now())
+  createdAt   DateTime         @default(now())
   items       SaleReturnItem[]
 
   @@index([tenantId, createdAt])
@@ -625,33 +625,33 @@ model SaleReturn {
 }
 
 model SaleReturnItem {
-  id          String     @id @default(uuid())
-  returnId    String
-  return      SaleReturn  @relation(fields: [returnId], references: [id], onDelete: Cascade)
-  productId   String
-  product     Product    @relation(fields: [productId], references: [id], onDelete: Restrict)
-  quantity    Float
-  unitPrice   Float
-  total       Float
-  reason      String
+  id        String     @id @default(uuid())
+  returnId  String
+  return    SaleReturn @relation(fields: [returnId], references: [id], onDelete: Cascade)
+  productId String
+  product   Product    @relation(fields: [productId], references: [id], onDelete: Restrict)
+  quantity  Float
+  unitPrice Float
+  total     Float
+  reason    String
 
   @@index([returnId])
   @@index([productId])
 }
 
 model PurchaseReturn {
-  id          String              @id @default(uuid())
+  id          String               @id @default(uuid())
   tenantId    String
-  company     Company             @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  company     Company              @relation(fields: [tenantId], references: [id], onDelete: Cascade)
   purchaseId  String
-  purchase    Purchase            @relation(fields: [purchaseId], references: [id], onDelete: Restrict)
+  purchase    Purchase             @relation(fields: [purchaseId], references: [id], onDelete: Restrict)
   warehouseId String
-  warehouse   Warehouse           @relation(fields: [warehouseId], references: [id], onDelete: Restrict)
+  warehouse   Warehouse            @relation(fields: [warehouseId], references: [id], onDelete: Restrict)
   userId      String?
-  user        User?               @relation(fields: [userId], references: [id], onDelete: SetNull)
-  total       Float               @default(0)
+  user        User?                @relation(fields: [userId], references: [id], onDelete: SetNull)
+  total       Float                @default(0)
   reason      String?
-  createdAt   DateTime            @default(now())
+  createdAt   DateTime             @default(now())
   items       PurchaseReturnItem[]
 
   @@index([tenantId, createdAt])
@@ -659,53 +659,53 @@ model PurchaseReturn {
 }
 
 model PurchaseReturnItem {
-  id          String          @id @default(uuid())
-  returnId    String
-  return      PurchaseReturn @relation(fields: [returnId], references: [id], onDelete: Cascade)
-  productId   String
-  product     Product         @relation(fields: [productId], references: [id], onDelete: Restrict)
-  quantity    Float
-  unitPrice   Float
-  total       Float
-  reason      String
+  id        String         @id @default(uuid())
+  returnId  String
+  return    PurchaseReturn @relation(fields: [returnId], references: [id], onDelete: Cascade)
+  productId String
+  product   Product        @relation(fields: [productId], references: [id], onDelete: Restrict)
+  quantity  Float
+  unitPrice Float
+  total     Float
+  reason    String
 
   @@index([returnId])
   @@index([productId])
 }
 
 model Account {
-  id          String              @id @default(uuid())
-  tenantId    String
-  company     Company             @relation(fields: [tenantId], references: [id], onDelete: Cascade)
-  code        String              // 1010, 2010 etc.
-  name        String
-  type        AccountType
-  parentId    String?
-  parent      Account?            @relation("AccountHierarchy", fields: [parentId], references: [id], onDelete: SetNull)
-  children    Account[]           @relation("AccountHierarchy")
-  lines       JournalEntryLine[]
-  createdAt   DateTime            @default(now())
-  updatedAt   DateTime            @updatedAt
+  id        String             @id @default(uuid())
+  tenantId  String
+  company   Company            @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  code      String // 1010, 2010 etc.
+  name      String
+  type      AccountType
+  parentId  String?
+  parent    Account?           @relation("AccountHierarchy", fields: [parentId], references: [id], onDelete: SetNull)
+  children  Account[]          @relation("AccountHierarchy")
+  lines     JournalEntryLine[]
+  createdAt DateTime           @default(now())
+  updatedAt DateTime           @updatedAt
 
   @@unique([tenantId, code])
   @@index([tenantId, type])
 }
 
 model JournalEntry {
-  id            String             @id @default(uuid())
-  tenantId      String
-  company       Company            @relation(fields: [tenantId], references: [id], onDelete: Cascade)
-  entryNumber   String
-  reference     String?
-  sourceType    String?
-  sourceId      String?
-  description   String
-  status        JournalStatus      @default(POSTED)
-  createdById   String?
-  creator       User?              @relation("JournalCreator", fields: [createdById], references: [id], onDelete: SetNull)
-  createdAt     DateTime           @default(now())
-  updatedAt     DateTime           @updatedAt
-  lines         JournalEntryLine[]
+  id          String             @id @default(uuid())
+  tenantId    String
+  company     Company            @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  entryNumber String
+  reference   String?
+  sourceType  String?
+  sourceId    String?
+  description String
+  status      JournalStatus      @default(POSTED)
+  createdById String?
+  creator     User?              @relation("JournalCreator", fields: [createdById], references: [id], onDelete: SetNull)
+  createdAt   DateTime           @default(now())
+  updatedAt   DateTime           @updatedAt
+  lines       JournalEntryLine[]
 
   @@unique([tenantId, entryNumber])
   @@index([tenantId, status])
@@ -741,16 +741,16 @@ model Cashbox {
 }
 
 model Expense {
-  id          String   @id @default(uuid())
-  tenantId    String
-  company     Company  @relation(fields: [tenantId], references: [id], onDelete: Cascade)
-  userId      String?
-  user        User?    @relation(fields: [userId], references: [id], onDelete: SetNull)
-  category    String   // إيجار، كهرباء، رواتب، صيانة
-  amount      Float
-  notes       String?
-  createdAt   DateTime @default(now())
-  updatedAt   DateTime @updatedAt
+  id        String   @id @default(uuid())
+  tenantId  String
+  company   Company  @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  userId    String?
+  user      User?    @relation(fields: [userId], references: [id], onDelete: SetNull)
+  category  String // إيجار، كهرباء، رواتب، صيانة
+  amount    Float
+  notes     String?
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 
   @@index([tenantId])
 }
