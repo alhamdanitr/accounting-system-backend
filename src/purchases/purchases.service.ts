@@ -36,6 +36,24 @@ export class PurchasesService {
       throw new NotFoundException('المستودع غير موجود ضمن الشركة المحددة');
     }
 
+    if (dto.branchId) {
+      const branch = await this.prisma.branch.findFirst({
+        where: { id: dto.branchId, tenantId: dto.tenantId },
+      });
+      if (!branch) {
+        throw new NotFoundException('الفرع غير موجود ضمن الشركة المحددة');
+      }
+    }
+
+    if (dto.userId) {
+      const user = await this.prisma.user.findFirst({
+        where: { id: dto.userId, tenantId: dto.tenantId, status: 'ACTIVE' },
+      });
+      if (!user) {
+        throw new NotFoundException('المستخدم غير موجود أو غير نشط ضمن الشركة المحددة');
+      }
+    }
+
     if (dto.supplierId) {
       const supplier = await this.prisma.supplier.findFirst({
         where: {

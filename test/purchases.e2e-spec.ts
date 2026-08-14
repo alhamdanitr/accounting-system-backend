@@ -2,11 +2,14 @@ import { Test, TestingModule } from '@nestjs/testing';
 import { INestApplication, ValidationPipe } from '@nestjs/common';
 import request from 'supertest';
 import { AppModule } from '../src/app.module';
+import { PrismaService } from '../src/prisma/prisma.service';
 import { PaymentType } from '@prisma/client';
 
 describe('Purchases & Suppliers E2E', () => {
   let app: INestApplication;
+  let prisma: PrismaService;
   let tenantId: string;
+  let accessToken: string;
   let warehouseId: string;
   let productId: string;
   let supplierId: string;
@@ -26,6 +29,7 @@ describe('Purchases & Suppliers E2E', () => {
       }),
     );
     await app.init();
+    prisma = app.get(PrismaService);
 
     // إنشاء شركة جديدة
     const companyRes = await request(app.getHttpServer())
@@ -37,9 +41,34 @@ describe('Purchases & Suppliers E2E', () => {
       });
     tenantId = companyRes.body.id;
 
+    const email = `purchases_${Date.now()}@example.com`;
+    const userRes = await request(app.getHttpServer())
+      .post('/api/v1/users')
+      .send({ tenantId, email, fullName: 'مستخدم المشتريات', password: 'SecurePassword123' })
+      .expect(201);
+    const permissions = await Promise.all(
+      ['purchases.view', 'purchases.create', 'inventory.view'].map((code) =>
+        prisma.permission.upsert({ where: { code }, update: {}, create: { code, name: code } }),
+      ),
+    );
+    const role = await prisma.role.create({
+      data: {
+        tenantId,
+        name: `Purchases Operator ${Date.now()}`,
+        permissions: { create: permissions.map((permission) => ({ permissionId: permission.id })) },
+      },
+    });
+    await prisma.userRole.create({ data: { userId: userRes.body.id, roleId: role.id } });
+    const loginRes = await request(app.getHttpServer())
+      .post('/api/v1/auth/login')
+      .send({ tenantId, identifier: email, password: 'SecurePassword123', deviceName: 'Purchases Test Device', devicePlatform: 'TEST', deviceKeyHash: `purchases-device-${Date.now()}` })
+      .expect(200);
+    accessToken = loginRes.body.accessToken;
+
     // جلب المستودع
     const whRes = await request(app.getHttpServer())
-      .get(`/api/v1/inventory/warehouses/${tenantId}`);
+      .get(`/api/v1/inventory/warehouses/${tenantId}`)
+      .set('Authorization', `Bearer ${accessToken}`);
     warehouseId = whRes.body[0].id;
 
     // إنشاء منتج
@@ -58,6 +87,7 @@ describe('Purchases & Suppliers E2E', () => {
     // إنشاء مورد
     const suppRes = await request(app.getHttpServer())
       .post('/api/v1/purchases/suppliers')
+      .set('Authorization', `Bearer ${accessToken}`)
       .send({
         tenantId,
         name: 'شركة الاستيراد والتصدير الحديثة',
@@ -73,6 +103,7 @@ describe('Purchases & Suppliers E2E', () => {
   it('should create a purchase invoice and increase inventory successfully', async () => {
     const purchaseRes = await request(app.getHttpServer())
       .post('/api/v1/purchases')
+      .set('Authorization', `Bearer ${accessToken}`)
       .send({
         tenantId,
         warehouseId,
@@ -96,6 +127,7 @@ describe('Purchases & Suppliers E2E', () => {
     // التحقق من تحديث رصيد المخزون ليصبح 10
     const stockRes = await request(app.getHttpServer())
       .get(`/api/v1/inventory/balance?warehouseId=${warehouseId}&productId=${productId}`)
+      .set('Authorization', `Bearer ${accessToken}`)
       .expect(200);
 
     expect(stockRes.body.quantity).toEqual(10);
@@ -104,6 +136,7 @@ describe('Purchases & Suppliers E2E', () => {
   it('should reject a purchase that uses another tenant warehouse', async () => {
     await request(app.getHttpServer())
       .post('/api/v1/purchases')
+      .set('Authorization', `Bearer ${accessToken}`)
       .send({
         tenantId: '33333333-3333-4333-8333-333333333333',
         warehouseId,
@@ -118,6 +151,6 @@ describe('Purchases & Suppliers E2E', () => {
           },
         ],
       })
-      .expect(404);
+      .expect(403);
   });
 });

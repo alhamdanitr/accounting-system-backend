@@ -53,7 +53,7 @@ describe('Sales & POS E2E', () => {
       .expect(201);
 
     const permissions = await Promise.all(
-      ['sales.view', 'sales.create'].map((code) =>
+      ['sales.view', 'sales.create', 'inventory.view', 'inventory.manage'].map((code) =>
         prisma.permission.upsert({
           where: { code },
           update: {},
@@ -89,7 +89,8 @@ describe('Sales & POS E2E', () => {
 
     // جلب المستودع
     const whRes = await request(app.getHttpServer())
-      .get(`/api/v1/inventory/warehouses/${tenantId}`);
+      .get(`/api/v1/inventory/warehouses/${tenantId}`)
+      .set('Authorization', `Bearer ${accessToken}`);
     warehouseId = whRes.body[0].id;
 
     // إنشاء منتج
@@ -108,6 +109,7 @@ describe('Sales & POS E2E', () => {
     // توريد مخزون أولد للمنتج لضمان نجاح البيع
     await request(app.getHttpServer())
       .post('/api/v1/inventory/movements')
+      .set('Authorization', `Bearer ${accessToken}`)
       .send({
         tenantId,
         warehouseId,
@@ -161,6 +163,7 @@ describe('Sales & POS E2E', () => {
     // التحقق من تحديث رصيد المخزون ليصبح 14
     const stockRes = await request(app.getHttpServer())
       .get(`/api/v1/inventory/balance?warehouseId=${warehouseId}&productId=${productId}`)
+      .set('Authorization', `Bearer ${accessToken}`)
       .expect(200);
 
     expect(stockRes.body.quantity).toEqual(14);
