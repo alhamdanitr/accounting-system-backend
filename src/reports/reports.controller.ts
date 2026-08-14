@@ -1,5 +1,6 @@
 import {
   Controller,
+  BadRequestException,
   ForbiddenException,
   Get,
   Param,
@@ -32,6 +33,20 @@ export class ReportsController {
   ) {
     this.assertTenant(request, tenantId);
     return this.reportsService.getDashboardSummary(tenantId);
+  }
+
+  @Get('sales/daily/:tenantId')
+  async getDailySalesReport(
+    @Param('tenantId') tenantId: string,
+    @Query('warehouseId') warehouseId: string,
+    @Query('date') date: string | undefined,
+    @Req() request: AuthenticatedRequest,
+  ) {
+    this.assertTenant(request, tenantId);
+    if (!warehouseId) {
+      throw new BadRequestException('يجب تحديد المستودع لتقرير المبيعات اليومية');
+    }
+    return this.reportsService.getDailySalesReport(tenantId, warehouseId, date);
   }
 
   @Get('sales/:tenantId')
