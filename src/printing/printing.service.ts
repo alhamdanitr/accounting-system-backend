@@ -6,9 +6,9 @@ import PDFDocument from 'pdfkit';
 export class PrintingService {
   constructor(private readonly prisma: PrismaService) {}
 
-  async generateSalesInvoicePdf(saleId: string): Promise<Buffer> {
-    const sale = await this.prisma.sale.findUnique({
-      where: { id: saleId },
+  async generateSalesInvoicePdf(saleId: string, tenantId: string): Promise<Buffer> {
+    const sale = await this.prisma.sale.findFirst({
+      where: { id: saleId, tenantId },
       include: {
         items: { include: { product: true } },
         customer: true,

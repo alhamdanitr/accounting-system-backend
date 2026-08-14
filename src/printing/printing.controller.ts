@@ -1,14 +1,26 @@
-import { Controller, Get, Param, Res } from '@nestjs/common';
+import { Controller, Get, Param, Req, Res, UseGuards } from '@nestjs/common';
+import { Request } from 'express';
 import { PrintingService } from './printing.service';
 import type { Response } from 'express';
+import { JwtAuthGuard } from '../auth/jwt-auth.guard';
+import { PermissionsGuard } from '../auth/guards/permissions.guard';
+import { Permissions } from '../auth/decorators/permissions.decorator';
+
+type AuthenticatedRequest = Request & { user: { tenantId: string } };
 
 @Controller('printing')
+@UseGuards(JwtAuthGuard, PermissionsGuard)
 export class PrintingController {
   constructor(private readonly printingService: PrintingService) {}
 
   @Get('sales/:saleId/pdf')
-  async downloadSalePdf(@Param('saleId') saleId: string, @Res() res: Response) {
-    const pdfBuffer = await this.printingService.generateSalesInvoicePdf(saleId);
+  @Permissions('printing.view')
+  async downloadSalePdf(
+    @Param('saleId') saleId: string,
+    @Req() request: AuthenticatedRequest,
+    @Res() res: Response,
+  ) {
+    const pdfBuffer = await this.printingService.generateSalesInvoicePdf(saleId, request.user.tenantId);
     
     res.set({
       'Content-Type': 'application/pdf',
