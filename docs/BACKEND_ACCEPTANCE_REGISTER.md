@@ -8,7 +8,7 @@
 | 2 | `.gitignore` شامل ومختبر | يستثني build/dist/node_modules/logs/env/coverage دون إخفاء ملفات المصدر | مراجعة `.gitignore` وفحص المسارات المحلية | CLOSED |
 | 3 | حماية فرع `main` | Pull Request ومراجعة وCI إلزامية | GitHub Branch Protection: مراجعة واحدة، `quality` إلزامي، conversation resolution، ومنع force-push/delete | CLOSED |
 | 4 | حماية كل endpoints | كل controller محمي بـ JWT وRBAC أو موثق كمسار public | `node scripts/check-route-guards.mjs` نجح؛ public allowlist محصور في auth/health وbootstrap company/user | CLOSED |
-| 5 | عزل tenant بنسبة 100% | رفض cross-tenant في كل الوحدات الحساسة | E2E cross-tenant matrix | OPEN |
+| 5 | عزل tenant بنسبة 100% | رفض cross-tenant في كل الوحدات الحساسة | `test/tenant-isolation.e2e-spec.ts`: 9/9 حالات ناجحة للمنتجات والمستودعات والحسابات والتقارير والعملاء والموردين والإعدادات والتدقيق والمزامنة | CLOSED |
 | 6 | عدم وجود أسرار | لا أسرار في الكود أو تاريخ Git | Gitleaks/secret scan و`git log` | OPEN |
 | 7 | فحص الثغرات في كل PR | workflow آلي للتبعيات والأسرار | Quality Gate يعمل على push وPR، ويشمل route audit؛ إضافة Gitleaks/dependency audit المتخصصة ما زالت مطلوبة | IN_PROGRESS |
 | 8 | Response/Error envelope موحد | كل النجاح والأخطاء عبر شكل موحد موثق | Global interceptor/filter واختبارات API | OPEN |
