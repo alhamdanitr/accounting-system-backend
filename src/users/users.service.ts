@@ -1,4 +1,4 @@
-import { BadRequestException, Injectable, NotFoundException } from '@nestjs/common';
+import { BadRequestException, ForbiddenException, Injectable, NotFoundException } from '@nestjs/common';
 import { Role, User, UserStatus } from '@prisma/client';
 import * as bcrypt from 'bcryptjs';
 import { PrismaService } from '../prisma/prisma.service';
@@ -14,6 +14,11 @@ export class UsersService {
     });
     if (!company) {
       throw new NotFoundException('الشركة غير موجودة');
+    }
+
+    const existingUserCount = await this.prisma.user.count({ where: { tenantId: dto.tenantId } });
+    if (existingUserCount > 0) {
+      throw new ForbiddenException('إنشاء المستخدم الأول فقط متاح عبر التسجيل الأولي؛ يجب أن ينشئ المستخدمون اللاحقون من مسؤول مصادق عليه');
     }
 
     if (dto.branchId) {
