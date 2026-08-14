@@ -1,4 +1,19 @@
-import { IsString, IsUUID, Length } from 'class-validator';
+import { IsOptional, IsString, IsUUID, Length } from 'class-validator';
+
+export class RefreshTokenDto {
+  @IsUUID()
+  tenantId!: string;
+
+  @IsString()
+  @Length(32, 500)
+  refreshToken!: string;
+
+  @IsOptional()
+  @IsUUID()
+  deviceId?: string;
+}
+
+export class LogoutDto extends RefreshTokenDto {}
 
 export class LoginDto {
   @IsUUID()
