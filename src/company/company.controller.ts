@@ -1,4 +1,14 @@
-import { Body, Controller, ForbiddenException, Get, Param, Post, Req, UseGuards } from '@nestjs/common';
+import { ApiTags } from '@nestjs/swagger';
+import {
+  Body,
+  Controller,
+  ForbiddenException,
+  Get,
+  Param,
+  Post,
+  Req,
+  UseGuards,
+} from '@nestjs/common';
 import { Request } from 'express';
 import { CompanyService } from './company.service';
 import { CreateBranchDto, CreateCompanyDto } from './dto/company.dto';
@@ -9,6 +19,7 @@ import { Permissions } from '../auth/decorators/permissions.decorator';
 
 type AuthenticatedRequest = Request & { user: { tenantId: string } };
 
+@ApiTags('company')
 @Controller('companies')
 export class CompanyController {
   constructor(private readonly companyService: CompanyService) {}

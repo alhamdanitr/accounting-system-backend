@@ -10,9 +10,22 @@ import { map } from 'rxjs/operators';
 import { ApiMeta, ApiSuccessResponse } from './api-response';
 
 @Injectable()
-export class ApiResponseInterceptor<T> implements NestInterceptor<T, ApiSuccessResponse<T>> {
-  intercept(context: ExecutionContext, next: CallHandler<T>): Observable<ApiSuccessResponse<T>> {
-    const request = context.switchToHttp().getRequest<{ method: string; originalUrl?: string; url: string; id?: string }>();
+export class ApiResponseInterceptor<T> implements NestInterceptor<
+  T,
+  ApiSuccessResponse<T>
+> {
+  intercept(
+    context: ExecutionContext,
+    next: CallHandler<T>,
+  ): Observable<ApiSuccessResponse<T>> {
+    const request = context
+      .switchToHttp()
+      .getRequest<{
+        method: string;
+        originalUrl?: string;
+        url: string;
+        id?: string;
+      }>();
     const requestId = request.id ?? randomUUID();
     const meta: ApiMeta = {
       requestId,

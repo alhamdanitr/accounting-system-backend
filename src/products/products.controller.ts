@@ -1,3 +1,4 @@
+import { ApiBearerAuth, ApiTags } from '@nestjs/swagger';
 import {
   Body,
   Controller,
@@ -24,7 +25,9 @@ import { Permissions } from '../auth/decorators/permissions.decorator';
 
 type AuthenticatedRequest = Request & { user: { tenantId: string } };
 
+@ApiTags('products')
 @Controller('products')
+@ApiBearerAuth('access-token')
 @UseGuards(JwtAuthGuard, PermissionsGuard)
 export class ProductsController {
   constructor(private readonly productsService: ProductsService) {}
