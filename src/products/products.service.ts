@@ -140,6 +140,7 @@ export class ProductsService {
 
     const product = await this.prisma.product.create({
       data: {
+        ...(dto.id ? { id: dto.id } : {}),
         tenantId: dto.tenantId,
         sku: dto.sku,
         barcode: dto.barcode,

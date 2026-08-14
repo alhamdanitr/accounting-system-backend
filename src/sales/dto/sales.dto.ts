@@ -3,6 +3,10 @@ import { IsArray, IsEnum, IsNumber, IsOptional, IsString, IsUUID, Min, ValidateN
 import { PaymentType } from '@prisma/client';
 
 export class CreateCustomerDto {
+  @IsOptional()
+  @IsUUID()
+  id?: string;
+
   @IsUUID()
   tenantId!: string;
 

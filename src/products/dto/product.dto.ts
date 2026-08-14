@@ -32,6 +32,10 @@ export class CreateUnitDto {
 }
 
 export class CreateProductDto {
+  @IsOptional()
+  @IsUUID()
+  id?: string;
+
   @IsUUID()
   tenantId!: string;
 

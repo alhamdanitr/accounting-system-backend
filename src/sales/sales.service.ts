@@ -10,6 +10,7 @@ export class SalesService {
   async createCustomer(dto: CreateCustomerDto): Promise<Customer> {
     return this.prisma.customer.create({
       data: {
+        ...(dto.id ? { id: dto.id } : {}),
         tenantId: dto.tenantId,
         name: dto.name,
         phone: dto.phone,
