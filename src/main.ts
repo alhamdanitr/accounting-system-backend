@@ -5,6 +5,8 @@ import { AppModule } from './app.module';
 import helmet from 'helmet';
 import rateLimit from 'express-rate-limit';
 import { DocumentBuilder, SwaggerModule } from '@nestjs/swagger';
+import { ApiExceptionFilter } from './common/http/api-exception.filter';
+import { ApiResponseInterceptor } from './common/http/api-response.interceptor';
 
 async function bootstrap(): Promise<void> {
   const app = await NestFactory.create(AppModule);
@@ -14,6 +16,8 @@ async function bootstrap(): Promise<void> {
   app.use(helmet());
 
   app.setGlobalPrefix('api/v1');
+  app.useGlobalInterceptors(new ApiResponseInterceptor());
+  app.useGlobalFilters(new ApiExceptionFilter());
 
   const swaggerConfig = new DocumentBuilder()
     .setTitle('Accounting System Backend API')

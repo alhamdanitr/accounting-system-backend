@@ -11,7 +11,7 @@
 | 5 | عزل tenant بنسبة 100% | رفض cross-tenant في كل الوحدات الحساسة | `test/tenant-isolation.e2e-spec.ts`: 9/9 حالات ناجحة للمنتجات والمستودعات والحسابات والتقارير والعملاء والموردين والإعدادات والتدقيق والمزامنة | CLOSED |
 | 6 | عدم وجود أسرار | لا أسرار في الكود أو تاريخ Git | Gitleaks على كامل التاريخ نجح في PR #4، مع مراجعة tracked secret-like files وتاريخ `.env` | CLOSED |
 | 7 | فحص الثغرات في كل PR | workflow آلي للتبعيات والأسرار | `Backend Security Gate` على push وPR؛ `pnpm audit --audit-level=high` نجح بعد معالجة effect/js-yaml، وGitleaks نجح في PR #4 | CLOSED |
-| 8 | Response/Error envelope موحد | كل النجاح والأخطاء عبر شكل موحد موثق | Global interceptor/filter واختبارات API | OPEN |
+| 8 | Response/Error envelope موحد | كل النجاح والأخطاء عبر شكل موحد موثق | `ApiResponseInterceptor` و`ApiExceptionFilter` عالميان، اختبارات envelope: 4/4، unit: 14/14، E2E: 35/35، وتوثيق `docs/API_CONTRACT.md` | CLOSED |
 | 9 | Swagger دقيق 100% | كل endpoint وDTO موثق ومطابق للعقد | Swagger مفعّل و`docs/API_CONTRACT.md` موجود، لكن تغطية DTO/endpoint الكاملة لم تُثبت بعد | IN_PROGRESS |
 | 10 | لا `console.log` | استخدام logger منظم فقط | grep + lint rule | OPEN |
 | 11 | تغطية لا تقل عن 75% | حد coverage مفروض في CI | Jest coverage report | OPEN |
