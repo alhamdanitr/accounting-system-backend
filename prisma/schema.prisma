@@ -619,6 +619,8 @@ model JournalEntry {
   company       Company            @relation(fields: [tenantId], references: [id], onDelete: Cascade)
   entryNumber   String
   reference     String?
+  sourceType    String?
+  sourceId      String?
   description   String
   status        JournalStatus      @default(POSTED)
   createdById   String?
@@ -629,6 +631,7 @@ model JournalEntry {
 
   @@unique([tenantId, entryNumber])
   @@index([tenantId, status])
+  @@index([tenantId, sourceType, sourceId])
 }
 
 model JournalEntryLine {

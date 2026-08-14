@@ -49,6 +49,14 @@ export class CreateJournalEntryDto {
   reference?: string;
 
   @IsOptional()
+  @IsString()
+  sourceType?: string;
+
+  @IsOptional()
+  @IsUUID()
+  sourceId?: string;
+
+  @IsOptional()
   @IsUUID()
   userId?: string;
 

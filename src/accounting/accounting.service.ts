@@ -83,6 +83,8 @@ export class AccountingService {
           tenantId: dto.tenantId,
           entryNumber,
           reference: dto.reference,
+          sourceType: dto.sourceType,
+          sourceId: dto.sourceId,
           description: dto.description,
           createdById: dto.userId,
           lines: {
