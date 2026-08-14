@@ -63,6 +63,9 @@ jobs:
       - name: Audit route guards
         run: pnpm run check:routes
 
+      - name: Audit structured logging policy
+        run: pnpm run check:console
+
       - name: Apply database migrations
         run: pnpm exec prisma migrate deploy
 
