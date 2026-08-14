@@ -99,7 +99,7 @@ describe('Sync Engine E2E', () => {
           {
             idempotencyKey: `op-${Date.now()}-1`,
             entityType: 'CUSTOMER',
-            entityId: 'cust-uuid-123',
+            entityId: '11111111-1111-4111-8111-111111111111',
             operationType: 'CREATE',
             payload: JSON.stringify({ name: 'عميل مزامنة' }),
           },
@@ -109,6 +109,7 @@ describe('Sync Engine E2E', () => {
 
     expect(res.body.success).toBe(true);
     expect(res.body.processedCount).toEqual(1);
+    expect(res.body.results[0].status).toEqual('SYNCED');
   });
 
   it('should pull remote operations successfully', async () => {

@@ -679,6 +679,7 @@ model Expense {
 
 model SyncOperation {
   id             String              @id @default(uuid())
+  sequence       BigInt              @default(autoincrement())
   tenantId       String
   company        Company             @relation(fields: [tenantId], references: [id], onDelete: Cascade)
   deviceId       String
@@ -697,6 +698,7 @@ model SyncOperation {
 
   @@unique([tenantId, idempotencyKey])
   @@index([tenantId, status, createdAt])
+  @@index([tenantId, sequence])
   @@index([deviceId, createdAt])
   @@index([entityType, entityId])
 }

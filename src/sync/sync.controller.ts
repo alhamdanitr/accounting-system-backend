@@ -42,10 +42,12 @@ export class SyncController {
   async pullOperations(
     @Query('tenantId') tenantId: string,
     @Query('deviceId') deviceId: string,
+    @Query('cursor') cursor: string | undefined,
+    @Query('limit') limit: string | undefined,
     @Req() request: AuthenticatedRequest,
   ) {
     this.assertDeviceIdentity(request, tenantId, deviceId);
-    return this.syncService.pullOperations(tenantId, deviceId);
+    return this.syncService.pullOperations(tenantId, deviceId, cursor, limit ? Number(limit) : undefined);
   }
 
   private assertDeviceIdentity(
