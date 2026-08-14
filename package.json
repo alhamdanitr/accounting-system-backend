@@ -25,7 +25,8 @@
     "test:e2e:coverage": "jest --config ./test/jest-e2e-coverage.json --runInBand",
     "check:routes": "node scripts/check-route-guards.mjs",
     "check:console": "node scripts/check-console-usage.mjs",
-    "check:accounting-coverage": "pnpm test:cov --runInBand && node scripts/check-accounting-coverage.mjs"
+    "check:accounting-coverage": "pnpm test:cov --runInBand && node scripts/check-accounting-coverage.mjs",
+    "check:coverage": "node scripts/check-global-coverage.mjs"
   },
   "dependencies": {
     "@nestjs/common": "^11.0.1",
@@ -89,10 +90,15 @@
       "^.+\\.(t|j)s$": "ts-jest"
     },
     "collectCoverageFrom": [
-      "**/*.(t|j)s"
+      "**/*.(t|j)s",
+      "!**/*.module.ts",
+      "!**/*.dto.ts",
+      "!**/main.ts",
+      "!**/prisma.service.ts"
     ],
     "coverageDirectory": "../coverage",
     "testEnvironment": "node",
-    "coverageProvider": "v8"
+    "coverageProvider": "v8",
+    "coverageReporters": ["text", "json", "json-summary", "lcov"]
   }
 }

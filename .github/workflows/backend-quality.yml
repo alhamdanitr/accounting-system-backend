@@ -72,6 +72,9 @@ jobs:
       - name: Unit tests and accounting coverage policy
         run: pnpm run check:accounting-coverage
 
+      - name: Global executable coverage policy
+        run: pnpm run check:coverage
+
       - name: E2E tests and coverage artifact
         run: pnpm run test:e2e:coverage
 
