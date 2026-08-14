@@ -3,6 +3,7 @@ import { INestApplication, ValidationPipe } from '@nestjs/common';
 import request from 'supertest';
 import { AppModule } from '../src/app.module';
 import { PrismaService } from '../src/prisma/prisma.service';
+import { randomUUID } from 'node:crypto';
 
 describe('Sync Engine E2E', () => {
   let app: INestApplication;
@@ -89,6 +90,7 @@ describe('Sync Engine E2E', () => {
   });
 
   it('should push local operations successfully (Idempotency)', async () => {
+    const customerId = randomUUID();
     const res = await request(app.getHttpServer())
       .post('/api/v1/sync/push')
       .set('Authorization', `Bearer ${accessToken}`)
@@ -99,7 +101,7 @@ describe('Sync Engine E2E', () => {
           {
             idempotencyKey: `op-${Date.now()}-1`,
             entityType: 'CUSTOMER',
-            entityId: '11111111-1111-4111-8111-111111111111',
+            entityId: customerId,
             operationType: 'CREATE',
             payload: JSON.stringify({ name: 'عميل مزامنة' }),
           },

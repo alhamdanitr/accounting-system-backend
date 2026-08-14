@@ -2,11 +2,14 @@ import { Test, TestingModule } from '@nestjs/testing';
 import { INestApplication, ValidationPipe } from '@nestjs/common';
 import request from 'supertest';
 import { AppModule } from '../src/app.module';
+import { PrismaService } from '../src/prisma/prisma.service';
 import { PaymentType, StockMovementType } from '@prisma/client';
 
 describe('WhatsApp Integration E2E', () => {
   let app: INestApplication;
+  let prisma: PrismaService;
   let tenantId: string;
+  let accessToken: string;
   let warehouseId: string;
   let productId: string;
   let saleId: string;
@@ -26,8 +29,9 @@ describe('WhatsApp Integration E2E', () => {
       }),
     );
     await app.init();
+    prisma = app.get(PrismaService);
 
-    // إنشاء شركة جديدة
+    // إنشاء شركة جديدة للاختبار
     const companyRes = await request(app.getHttpServer())
       .post('/api/v1/companies')
       .send({
@@ -37,14 +41,56 @@ describe('WhatsApp Integration E2E', () => {
       });
     tenantId = companyRes.body.id;
 
+    const email = `whatsapp_${Date.now()}@example.com`;
+    const userRes = await request(app.getHttpServer())
+      .post('/api/v1/users')
+      .send({
+        tenantId,
+        email,
+        fullName: 'مستخدم WhatsApp للاختبار',
+        password: 'SecurePassword123',
+      })
+      .expect(201);
+    const permissions = await Promise.all(
+      ['inventory.view', 'inventory.manage', 'products.view', 'products.manage', 'sales.create', 'whatsapp.send'].map((code) =>
+        prisma.permission.upsert({
+          where: { code },
+          update: {},
+          create: { code, name: code },
+        }),
+      ),
+    );
+    const role = await prisma.role.create({
+      data: {
+        tenantId,
+        name: `WhatsApp E2E Operator ${Date.now()}`,
+        permissions: { create: permissions.map((permission) => ({ permissionId: permission.id })) },
+      },
+    });
+    await prisma.userRole.create({ data: { userId: userRes.body.id, roleId: role.id } });
+    const loginRes = await request(app.getHttpServer())
+      .post('/api/v1/auth/login')
+      .send({
+        tenantId,
+        identifier: email,
+        password: 'SecurePassword123',
+        deviceName: 'WhatsApp E2E Device',
+        devicePlatform: 'TEST',
+        deviceKeyHash: `whatsapp-device-${Date.now()}`,
+      })
+      .expect(200);
+    accessToken = loginRes.body.accessToken;
+
     // جلب المستودع
     const whRes = await request(app.getHttpServer())
-      .get(`/api/v1/inventory/warehouses/${tenantId}`);
+      .get(`/api/v1/inventory/warehouses/${tenantId}`)
+      .set('Authorization', `Bearer ${accessToken}`);
     warehouseId = whRes.body[0].id;
 
     // إنشاء منتج وتوريد مخزون
     const prodRes = await request(app.getHttpServer())
       .post('/api/v1/products')
+      .set('Authorization', `Bearer ${accessToken}`)
       .send({
         tenantId,
         sku: `ROUTER-AP-${Date.now()}`,
@@ -57,6 +103,7 @@ describe('WhatsApp Integration E2E', () => {
 
     await request(app.getHttpServer())
       .post('/api/v1/inventory/movements')
+      .set('Authorization', `Bearer ${accessToken}`)
       .send({
         tenantId,
         warehouseId,
@@ -69,6 +116,7 @@ describe('WhatsApp Integration E2E', () => {
     // إنشاء فاتورة مبيعات
     const saleRes = await request(app.getHttpServer())
       .post('/api/v1/sales')
+      .set('Authorization', `Bearer ${accessToken}`)
       .send({
         tenantId,
         warehouseId,
@@ -86,6 +134,7 @@ describe('WhatsApp Integration E2E', () => {
   it('should send invoice via WhatsApp successfully', async () => {
     const res = await request(app.getHttpServer())
       .post('/api/v1/whatsapp/invoice')
+      .set('Authorization', `Bearer ${accessToken}`)
       .send({
         tenantId,
         saleId,
