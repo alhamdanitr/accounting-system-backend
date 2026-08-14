@@ -53,7 +53,16 @@ describe('Sales & POS E2E', () => {
       .expect(201);
 
     const permissions = await Promise.all(
-      ['sales.view', 'sales.create', 'inventory.view', 'inventory.manage'].map((code) =>
+      [
+        'sales.view',
+        'sales.create',
+        'inventory.view',
+        'inventory.manage',
+        'products.view',
+        'products.manage',
+        'customers.view',
+        'customers.manage',
+      ].map((code) =>
         prisma.permission.upsert({
           where: { code },
           update: {},
@@ -66,7 +75,9 @@ describe('Sales & POS E2E', () => {
         tenantId,
         name: `Sales Operator ${Date.now()}`,
         permissions: {
-          create: permissions.map((permission) => ({ permissionId: permission.id })),
+          create: permissions.map((permission) => ({
+            permissionId: permission.id,
+          })),
         },
       },
     });
@@ -96,6 +107,7 @@ describe('Sales & POS E2E', () => {
     // إنشاء منتج
     const prodRes = await request(app.getHttpServer())
       .post('/api/v1/products')
+      .set('Authorization', `Bearer ${accessToken}`)
       .send({
         tenantId,
         sku: `SWITCH-24-${Date.now()}`,
@@ -162,7 +174,9 @@ describe('Sales & POS E2E', () => {
 
     // التحقق من تحديث رصيد المخزون ليصبح 14
     const stockRes = await request(app.getHttpServer())
-      .get(`/api/v1/inventory/balance?warehouseId=${warehouseId}&productId=${productId}`)
+      .get(
+        `/api/v1/inventory/balance?warehouseId=${warehouseId}&productId=${productId}`,
+      )
       .set('Authorization', `Bearer ${accessToken}`)
       .expect(200);
 

@@ -43,24 +43,51 @@ describe('Products & Inventory E2E', () => {
     const email = `inventory_${Date.now()}@example.com`;
     const userRes = await request(app.getHttpServer())
       .post('/api/v1/users')
-      .send({ tenantId, email, fullName: 'مستخدم المخزون', password: 'SecurePassword123' })
+      .send({
+        tenantId,
+        email,
+        fullName: 'مستخدم المخزون',
+        password: 'SecurePassword123',
+      })
       .expect(201);
     const permissions = await Promise.all(
-      ['inventory.view', 'inventory.manage'].map((code) =>
-        prisma.permission.upsert({ where: { code }, update: {}, create: { code, name: code } }),
+      [
+        'inventory.view',
+        'inventory.manage',
+        'products.view',
+        'products.manage',
+      ].map((code) =>
+        prisma.permission.upsert({
+          where: { code },
+          update: {},
+          create: { code, name: code },
+        }),
       ),
     );
     const role = await prisma.role.create({
       data: {
         tenantId,
         name: `Inventory Operator ${Date.now()}`,
-        permissions: { create: permissions.map((permission) => ({ permissionId: permission.id })) },
+        permissions: {
+          create: permissions.map((permission) => ({
+            permissionId: permission.id,
+          })),
+        },
       },
     });
-    await prisma.userRole.create({ data: { userId: userRes.body.id, roleId: role.id } });
+    await prisma.userRole.create({
+      data: { userId: userRes.body.id, roleId: role.id },
+    });
     const loginRes = await request(app.getHttpServer())
       .post('/api/v1/auth/login')
-      .send({ tenantId, identifier: email, password: 'SecurePassword123', deviceName: 'Inventory Test Device', devicePlatform: 'TEST', deviceKeyHash: `inventory-device-${Date.now()}` })
+      .send({
+        tenantId,
+        identifier: email,
+        password: 'SecurePassword123',
+        deviceName: 'Inventory Test Device',
+        devicePlatform: 'TEST',
+        deviceKeyHash: `inventory-device-${Date.now()}`,
+      })
       .expect(200);
     accessToken = loginRes.body.accessToken;
 
@@ -78,6 +105,7 @@ describe('Products & Inventory E2E', () => {
   it('should create a product successfully', async () => {
     const res = await request(app.getHttpServer())
       .post('/api/v1/products')
+      .set('Authorization', `Bearer ${accessToken}`)
       .send({
         tenantId,
         sku: `RB-750-${Date.now()}`,
@@ -114,7 +142,9 @@ describe('Products & Inventory E2E', () => {
 
   it('should check stock balance successfully', async () => {
     const res = await request(app.getHttpServer())
-      .get(`/api/v1/inventory/balance?warehouseId=${warehouseId}&productId=${productId}`)
+      .get(
+        `/api/v1/inventory/balance?warehouseId=${warehouseId}&productId=${productId}`,
+      )
       .set('Authorization', `Bearer ${accessToken}`)
       .expect(200);
 

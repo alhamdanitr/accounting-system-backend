@@ -1,7 +1,16 @@
-import { BadRequestException, Injectable, NotFoundException } from '@nestjs/common';
+import {
+  BadRequestException,
+  Injectable,
+  NotFoundException,
+} from '@nestjs/common';
 import { Brand, Category, Product, Unit } from '@prisma/client';
 import { PrismaService } from '../prisma/prisma.service';
-import { CreateBrandDto, CreateCategoryDto, CreateProductDto, CreateUnitDto } from './dto/product.dto';
+import {
+  CreateBrandDto,
+  CreateCategoryDto,
+  CreateProductDto,
+  CreateUnitDto,
+} from './dto/product.dto';
 
 @Injectable()
 export class ProductsService {
@@ -103,6 +112,32 @@ export class ProductsService {
       throw new BadRequestException('رمز المنتج (SKU) مستخدم مسبقاً');
     }
 
+    if (dto.categoryId) {
+      const category = await this.prisma.category.findFirst({
+        where: { id: dto.categoryId, tenantId: dto.tenantId },
+      });
+      if (!category)
+        throw new NotFoundException('التصنيف غير موجود ضمن الشركة المحددة');
+    }
+    if (dto.brandId) {
+      const brand = await this.prisma.brand.findFirst({
+        where: { id: dto.brandId, tenantId: dto.tenantId },
+      });
+      if (!brand)
+        throw new NotFoundException(
+          'العلامة التجارية غير موجودة ضمن الشركة المحددة',
+        );
+    }
+    if (dto.unitId) {
+      const unit = await this.prisma.unit.findFirst({
+        where: { id: dto.unitId, tenantId: dto.tenantId },
+      });
+      if (!unit)
+        throw new NotFoundException(
+          'وحدة القياس غير موجودة ضمن الشركة المحددة',
+        );
+    }
+
     const product = await this.prisma.product.create({
       data: {
         tenantId: dto.tenantId,
@@ -132,12 +167,14 @@ export class ProductsService {
 
     // إذا وُجد باركود أساسي، نسجله في جدول الباركودات المرتبطة
     if (dto.barcode) {
-      await this.prisma.productBarcode.create({
-        data: {
-          productId: product.id,
-          barcode: dto.barcode,
-        },
-      }).catch(() => {});
+      await this.prisma.productBarcode
+        .create({
+          data: {
+            productId: product.id,
+            barcode: dto.barcode,
+          },
+        })
+        .catch(() => {});
     }
 
     return product;
@@ -155,9 +192,9 @@ export class ProductsService {
     });
   }
 
-  async findProductById(id: string): Promise<Product> {
-    const product = await this.prisma.product.findUnique({
-      where: { id },
+  async findProductById(id: string, tenantId: string): Promise<Product> {
+    const product = await this.prisma.product.findFirst({
+      where: { id, tenantId },
       include: {
         category: true,
         brand: true,

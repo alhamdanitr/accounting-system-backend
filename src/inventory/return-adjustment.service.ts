@@ -34,12 +34,33 @@ export class ReturnAdjustmentService {
   constructor(private prisma: PrismaService) {}
 
   async processReturn(dto: ProcessReturnDto) {
-    this.logger.log(`Processing return for tenant ${dto.tenantId}, type: ${dto.isCustomerReturn ? 'Customer Return' : 'Supplier Return'}`);
+    this.logger.log(
+      `Processing return for tenant ${dto.tenantId}, type: ${dto.isCustomerReturn ? 'Customer Return' : 'Supplier Return'}`,
+    );
 
     return this.prisma.$transaction(async (tx) => {
+      const warehouse = await tx.warehouse.findFirst({
+        where: { id: dto.warehouseId, tenantId: dto.tenantId },
+      });
+      if (!warehouse)
+        throw new BadRequestException('المستودع غير موجود ضمن الشركة المحددة');
+
       for (const item of dto.items) {
+        const product = await tx.product.findFirst({
+          where: { id: item.productId, tenantId: dto.tenantId },
+        });
+        if (!product)
+          throw new BadRequestException(
+            `المنتج ${item.productId} غير موجود ضمن الشركة المحددة`,
+          );
+
         const balance = await tx.stockBalance.findUnique({
-          where: { warehouseId_productId: { warehouseId: dto.warehouseId, productId: item.productId } }
+          where: {
+            warehouseId_productId: {
+              warehouseId: dto.warehouseId,
+              productId: item.productId,
+            },
+          },
         });
 
         const currentQty = balance ? balance.quantity : 0;
@@ -48,13 +69,15 @@ export class ReturnAdjustmentService {
         const newQty = currentQty + qtyChange;
 
         if (newQty < 0) {
-          throw new BadRequestException(`Insufficient stock for return on product ${item.productId}`);
+          throw new BadRequestException(
+            `Insufficient stock for return on product ${item.productId}`,
+          );
         }
 
         if (balance) {
           await tx.stockBalance.update({
             where: { id: balance.id },
-            data: { quantity: newQty }
+            data: { quantity: newQty },
           });
         } else {
           await tx.stockBalance.create({
@@ -62,8 +85,8 @@ export class ReturnAdjustmentService {
               tenantId: dto.tenantId,
               warehouseId: dto.warehouseId,
               productId: item.productId,
-              quantity: newQty
-            }
+              quantity: newQty,
+            },
           });
         }
 
@@ -72,38 +95,64 @@ export class ReturnAdjustmentService {
             tenantId: dto.tenantId,
             warehouseId: dto.warehouseId,
             productId: item.productId,
-            type: dto.isCustomerReturn ? StockMovementType.SALE_RETURN_IN : StockMovementType.PURCHASE_RETURN_OUT,
+            type: dto.isCustomerReturn
+              ? StockMovementType.SALE_RETURN_IN
+              : StockMovementType.PURCHASE_RETURN_OUT,
             quantity: qtyChange,
             balanceAfter: newQty,
             notes: item.reason,
-            createdById: dto.userId
-          }
+            createdById: dto.userId,
+          },
         });
       }
 
-      return { success: true, message: 'Return processed successfully and stock updated' };
+      return {
+        success: true,
+        message: 'Return processed successfully and stock updated',
+      };
     });
   }
 
   async processStockAdjustment(dto: StockAdjustmentDto) {
-    this.logger.log(`Processing stock adjustment for product ${dto.productId} in warehouse ${dto.warehouseId}`);
+    this.logger.log(
+      `Processing stock adjustment for product ${dto.productId} in warehouse ${dto.warehouseId}`,
+    );
 
     return this.prisma.$transaction(async (tx) => {
+      const warehouse = await tx.warehouse.findFirst({
+        where: { id: dto.warehouseId, tenantId: dto.tenantId },
+      });
+      if (!warehouse)
+        throw new BadRequestException('المستودع غير موجود ضمن الشركة المحددة');
+      const product = await tx.product.findFirst({
+        where: { id: dto.productId, tenantId: dto.tenantId },
+      });
+      if (!product)
+        throw new BadRequestException('المنتج غير موجود ضمن الشركة المحددة');
+
       const balance = await tx.stockBalance.findUnique({
-        where: { warehouseId_productId: { warehouseId: dto.warehouseId, productId: dto.productId } }
+        where: {
+          warehouseId_productId: {
+            warehouseId: dto.warehouseId,
+            productId: dto.productId,
+          },
+        },
       });
 
       const systemQty = balance ? balance.quantity : 0;
       const difference = dto.actualQuantity - systemQty;
 
       if (difference === 0) {
-        return { success: true, message: 'No adjustment needed, actual quantity matches system.' };
+        return {
+          success: true,
+          message: 'No adjustment needed, actual quantity matches system.',
+        };
       }
 
       if (balance) {
         await tx.stockBalance.update({
           where: { id: balance.id },
-          data: { quantity: dto.actualQuantity }
+          data: { quantity: dto.actualQuantity },
         });
       } else {
         await tx.stockBalance.create({
@@ -111,8 +160,8 @@ export class ReturnAdjustmentService {
             tenantId: dto.tenantId,
             warehouseId: dto.warehouseId,
             productId: dto.productId,
-            quantity: dto.actualQuantity
-          }
+            quantity: dto.actualQuantity,
+          },
         });
       }
 
@@ -125,11 +174,15 @@ export class ReturnAdjustmentService {
           quantity: difference,
           balanceAfter: dto.actualQuantity,
           notes: `Stock Taking Adjustment: ${dto.reason}`,
-          createdById: dto.userId
-        }
+          createdById: dto.userId,
+        },
       });
 
-      return { success: true, difference, message: 'Stock adjustment completed successfully' };
+      return {
+        success: true,
+        difference,
+        message: 'Stock adjustment completed successfully',
+      };
     });
   }
 }

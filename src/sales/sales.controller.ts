@@ -29,7 +29,7 @@ export class SalesController {
   constructor(private readonly salesService: SalesService) {}
 
   @Post('customers')
-  @Permissions('sales.create')
+  @Permissions('customers.manage')
   async createCustomer(
     @Body() dto: CreateCustomerDto,
     @Req() request: AuthenticatedRequest,
@@ -39,7 +39,7 @@ export class SalesController {
   }
 
   @Get('customers/:tenantId')
-  @Permissions('sales.view')
+  @Permissions('customers.view')
   async findCustomers(
     @Param('tenantId') tenantId: string,
     @Req() request: AuthenticatedRequest,
@@ -73,7 +73,9 @@ export class SalesController {
 
   private assertTenant(request: AuthenticatedRequest, tenantId: string) {
     if (!request.user || request.user.tenantId !== tenantId) {
-      throw new ForbiddenException('الشركة المطلوبة غير متطابقة مع جلسة المستخدم');
+      throw new ForbiddenException(
+        'الشركة المطلوبة غير متطابقة مع جلسة المستخدم',
+      );
     }
   }
 }

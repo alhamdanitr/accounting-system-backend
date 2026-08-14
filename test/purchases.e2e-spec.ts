@@ -44,24 +44,52 @@ describe('Purchases & Suppliers E2E', () => {
     const email = `purchases_${Date.now()}@example.com`;
     const userRes = await request(app.getHttpServer())
       .post('/api/v1/users')
-      .send({ tenantId, email, fullName: 'مستخدم المشتريات', password: 'SecurePassword123' })
+      .send({
+        tenantId,
+        email,
+        fullName: 'مستخدم المشتريات',
+        password: 'SecurePassword123',
+      })
       .expect(201);
     const permissions = await Promise.all(
-      ['purchases.view', 'purchases.create', 'inventory.view'].map((code) =>
-        prisma.permission.upsert({ where: { code }, update: {}, create: { code, name: code } }),
+      [
+        'purchases.view',
+        'purchases.create',
+        'inventory.view',
+        'products.view',
+        'products.manage',
+      ].map((code) =>
+        prisma.permission.upsert({
+          where: { code },
+          update: {},
+          create: { code, name: code },
+        }),
       ),
     );
     const role = await prisma.role.create({
       data: {
         tenantId,
         name: `Purchases Operator ${Date.now()}`,
-        permissions: { create: permissions.map((permission) => ({ permissionId: permission.id })) },
+        permissions: {
+          create: permissions.map((permission) => ({
+            permissionId: permission.id,
+          })),
+        },
       },
     });
-    await prisma.userRole.create({ data: { userId: userRes.body.id, roleId: role.id } });
+    await prisma.userRole.create({
+      data: { userId: userRes.body.id, roleId: role.id },
+    });
     const loginRes = await request(app.getHttpServer())
       .post('/api/v1/auth/login')
-      .send({ tenantId, identifier: email, password: 'SecurePassword123', deviceName: 'Purchases Test Device', devicePlatform: 'TEST', deviceKeyHash: `purchases-device-${Date.now()}` })
+      .send({
+        tenantId,
+        identifier: email,
+        password: 'SecurePassword123',
+        deviceName: 'Purchases Test Device',
+        devicePlatform: 'TEST',
+        deviceKeyHash: `purchases-device-${Date.now()}`,
+      })
       .expect(200);
     accessToken = loginRes.body.accessToken;
 
@@ -74,6 +102,7 @@ describe('Purchases & Suppliers E2E', () => {
     // إنشاء منتج
     const prodRes = await request(app.getHttpServer())
       .post('/api/v1/products')
+      .set('Authorization', `Bearer ${accessToken}`)
       .send({
         tenantId,
         sku: `CABLE-UTP-${Date.now()}`,
@@ -126,7 +155,9 @@ describe('Purchases & Suppliers E2E', () => {
 
     // التحقق من تحديث رصيد المخزون ليصبح 10
     const stockRes = await request(app.getHttpServer())
-      .get(`/api/v1/inventory/balance?warehouseId=${warehouseId}&productId=${productId}`)
+      .get(
+        `/api/v1/inventory/balance?warehouseId=${warehouseId}&productId=${productId}`,
+      )
       .set('Authorization', `Bearer ${accessToken}`)
       .expect(200);
 

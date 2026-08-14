@@ -11,7 +11,16 @@ import {
 } from '@nestjs/common';
 import { Request } from 'express';
 import { InventoryService } from './inventory.service';
-import { CreateWarehouseDto, StockAdjustmentDto, StockMovementDto } from './dto/inventory.dto';
+import { ReturnAdjustmentService } from './return-adjustment.service';
+import type {
+  ProcessReturnDto,
+  StockAdjustmentDto as ReturnStockAdjustmentDto,
+} from './return-adjustment.service';
+import {
+  CreateWarehouseDto,
+  StockAdjustmentDto,
+  StockMovementDto,
+} from './dto/inventory.dto';
 import { StockMovement, Warehouse } from '@prisma/client';
 import { JwtAuthGuard } from '../auth/jwt-auth.guard';
 import { PermissionsGuard } from '../auth/guards/permissions.guard';
@@ -27,7 +36,10 @@ type AuthenticatedRequest = Request & {
 @Controller('inventory')
 @UseGuards(JwtAuthGuard, PermissionsGuard)
 export class InventoryController {
-  constructor(private readonly inventoryService: InventoryService) {}
+  constructor(
+    private readonly inventoryService: InventoryService,
+    private readonly returnAdjustmentService: ReturnAdjustmentService,
+  ) {}
 
   @Post('warehouses')
   @Permissions('inventory.manage')
@@ -75,6 +87,32 @@ export class InventoryController {
     });
   }
 
+  @Post('returns')
+  @Permissions('returns.manage')
+  async processReturn(
+    @Body() dto: ProcessReturnDto,
+    @Req() request: AuthenticatedRequest,
+  ) {
+    this.assertTenant(request, dto.tenantId);
+    return this.returnAdjustmentService.processReturn({
+      ...dto,
+      userId: request.user.userId,
+    });
+  }
+
+  @Post('stock-adjustments')
+  @Permissions('returns.manage')
+  async processStockAdjustment(
+    @Body() dto: ReturnStockAdjustmentDto,
+    @Req() request: AuthenticatedRequest,
+  ) {
+    this.assertTenant(request, dto.tenantId);
+    return this.returnAdjustmentService.processStockAdjustment({
+      ...dto,
+      userId: request.user.userId,
+    });
+  }
+
   @Get('balance')
   @Permissions('inventory.view')
   async getStockBalance(
@@ -82,12 +120,18 @@ export class InventoryController {
     @Query('productId') productId: string,
     @Req() request: AuthenticatedRequest,
   ) {
-    return this.inventoryService.getStockBalance(warehouseId, productId, request.user.tenantId);
+    return this.inventoryService.getStockBalance(
+      warehouseId,
+      productId,
+      request.user.tenantId,
+    );
   }
 
   private assertTenant(request: AuthenticatedRequest, tenantId: string) {
     if (!request.user || request.user.tenantId !== tenantId) {
-      throw new ForbiddenException('الشركة المطلوبة غير متطابقة مع جلسة المستخدم');
+      throw new ForbiddenException(
+        'الشركة المطلوبة غير متطابقة مع جلسة المستخدم',
+      );
     }
   }
 }
