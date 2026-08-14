@@ -38,7 +38,7 @@ describe('Sync Engine E2E', () => {
     tenantId = company.id;
 
     const email = `sync_user_${Date.now()}@example.com`;
-    await request(app.getHttpServer())
+    const userRes = await request(app.getHttpServer())
       .post('/api/v1/users')
       .send({
         tenantId,
@@ -47,6 +47,26 @@ describe('Sync Engine E2E', () => {
         password: 'SecurePassword123',
       })
       .expect(201);
+
+    const syncPermissions = await Promise.all(
+      ['sync.push', 'sync.pull'].map((code) =>
+        prisma.permission.upsert({
+          where: { code },
+          update: {},
+          create: { code, name: code },
+        }),
+      ),
+    );
+    const syncRole = await prisma.role.create({
+      data: {
+        tenantId,
+        name: `Sync Operator ${Date.now()}`,
+        permissions: {
+          create: syncPermissions.map((permission) => ({ permissionId: permission.id })),
+        },
+      },
+    });
+    await prisma.userRole.create({ data: { userId: userRes.body.id, roleId: syncRole.id } });
 
     const loginRes = await request(app.getHttpServer())
       .post('/api/v1/auth/login')

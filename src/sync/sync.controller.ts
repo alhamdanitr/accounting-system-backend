@@ -12,6 +12,8 @@ import { Request } from 'express';
 import { SyncService } from './sync.service';
 import { SyncPushDto } from './dto/sync.dto';
 import { JwtAuthGuard } from '../auth/jwt-auth.guard';
+import { PermissionsGuard } from '../auth/guards/permissions.guard';
+import { Permissions } from '../auth/decorators/permissions.decorator';
 
 type AuthenticatedRequest = Request & {
   user: {
@@ -21,11 +23,12 @@ type AuthenticatedRequest = Request & {
 };
 
 @Controller('sync')
-@UseGuards(JwtAuthGuard)
+@UseGuards(JwtAuthGuard, PermissionsGuard)
 export class SyncController {
   constructor(private readonly syncService: SyncService) {}
 
   @Post('push')
+  @Permissions('sync.push')
   async pushOperations(
     @Body() dto: SyncPushDto,
     @Req() request: AuthenticatedRequest,
@@ -35,6 +38,7 @@ export class SyncController {
   }
 
   @Get('pull')
+  @Permissions('sync.pull')
   async pullOperations(
     @Query('tenantId') tenantId: string,
     @Query('deviceId') deviceId: string,
